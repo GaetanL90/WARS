@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -60,7 +62,7 @@ const Login: React.FC = () => {
       const userData = dummyUsers[email.toLowerCase()];
 
       if (!userData || userData.password !== password) {
-        throw new Error('Invalid email or password');
+        throw new Error(t('auth.login.invalidCredentials'));
       }
 
       // Simulate successful login
@@ -87,7 +89,7 @@ const Login: React.FC = () => {
       // Redirect to /dashboard - DashboardRedirect will route to role-specific dashboard
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || t('errors.loginFailed'));
     } finally {
       setLoading(false);
     }
@@ -99,10 +101,10 @@ const Login: React.FC = () => {
         <Col md={6} lg={4}>
           <Card>
             <Card.Body>
-              <Card.Title className="text-center mb-4">Login</Card.Title>
+              <Card.Title className="text-center mb-4">{t('auth.login.title')}</Card.Title>
               
               <Alert variant="info" className="mb-3">
-                <strong>Test Credentials:</strong><br />
+                <strong>{t('auth.login.testCredentials')}</strong><br />
                 Admin: admin@example.com / admin123<br />
                 Responsible: responsible@example.com / responsible123<br />
                 Technician: technician@example.com / technician123<br />
@@ -114,10 +116,10 @@ const Login: React.FC = () => {
               
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Email</Form.Label>
+                  <Form.Label>{t('auth.login.email')}</Form.Label>
                   <Form.Control
                     type="email"
-                    placeholder="Enter email"
+                    placeholder={t('auth.login.enterEmail')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -125,10 +127,10 @@ const Login: React.FC = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Password</Form.Label>
+                  <Form.Label>{t('auth.login.password')}</Form.Label>
                   <Form.Control
                     type="password"
-                    placeholder="Enter password"
+                    placeholder={t('auth.login.enterPassword')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -137,15 +139,15 @@ const Login: React.FC = () => {
 
                 <div className="d-grid mb-3">
                   <Button variant="primary" type="submit" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Login'}
+                    {loading ? t('auth.login.loggingIn') : t('common.login')}
                   </Button>
                 </div>
 
                 <div className="text-center">
-                  <Link to="/reset-password">Forgot password?</Link>
+                  <Link to="/reset-password">{t('auth.login.forgotPassword')}</Link>
                 </div>
                 <div className="text-center mt-2">
-                  <Link to="/signup">Don't have an account? Register</Link>
+                  <Link to="/signup">{t('auth.login.noAccount')}</Link>
                 </div>
               </Form>
             </Card.Body>

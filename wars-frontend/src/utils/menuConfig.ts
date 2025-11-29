@@ -24,72 +24,47 @@ const roleMenuItems: Record<string, MenuItem[]> = {
   admin: [
     {
       path: '/dashboard/admin',
-      label: 'Admin Dashboard',
+      label: 'Dashboard',
       icon: '🏠',
     },
     {
-      path: '/cases',
-      label: 'All Cases',
+      path: '/cases/admin',
+      label: 'Cases',
       icon: '📋',
+    },
+    {
+      path: '/sensors',
+      label: 'Sensor Monitoring',
+      icon: '📡',
     },
     {
       path: '/users',
-      label: 'User Management',
+      label: 'Users',
       icon: '👥',
-    },
-    {
-      path: '/reports',
-      label: 'Reports',
-      icon: '📈',
-    },
-    {
-      path: '/settings',
-      label: 'System Settings',
-      icon: '⚙️',
     },
   ],
   technician: [
-    {
-      path: '/dashboard/technician',
-      label: 'My Dashboard',
-      icon: '🏠',
-    },
-    {
-      path: '/cases',
-      label: 'My Cases',
-      icon: '📋',
-    },
     {
       path: '/cases/assigned',
       label: 'Assigned Cases',
       icon: '✅',
     },
     {
-      path: '/reports',
-      label: 'My Reports',
-      icon: '📈',
+      path: '/sensors',
+      label: 'Sensor Monitoring',
+      icon: '📡',
     },
   ],
   customer: [
-    {
-      path: '/dashboard/customer',
-      label: 'My Dashboard',
-      icon: '🏠',
-    },
-    {
-      path: '/cases',
-      label: 'My Cases',
-      icon: '📋',
-    },
     {
       path: '/cases/new',
       label: 'Report Issue',
       icon: '➕',
     },
     {
-      path: '/reports',
-      label: 'My Reports',
-      icon: '📈',
+      path: '/cases',
+      label: 'My Cases',
+      icon: '📋',
     },
   ],
   responsible: [
@@ -126,6 +101,11 @@ const roleMenuItems: Record<string, MenuItem[]> = {
       icon: '📋',
     },
     {
+      path: '/sensors',
+      label: 'Sensor Monitoring',
+      icon: '📡',
+    },
+    {
       path: '/cases/pending-review',
       label: 'Pending Review',
       icon: '🔍',
@@ -151,6 +131,11 @@ const roleMenuItems: Record<string, MenuItem[]> = {
       path: '/cases',
       label: 'All Cases',
       icon: '📋',
+    },
+    {
+      path: '/sensors',
+      label: 'Sensor Monitoring',
+      icon: '📡',
     },
     {
       path: '/cases/pending-review',
@@ -179,7 +164,30 @@ export const getMenuItemsForRole = (role: string | null): MenuItem[] => {
   const normalizedRole = role.toLowerCase().replace('_', '');
   const roleSpecificItems = roleMenuItems[normalizedRole] || roleMenuItems[role.toLowerCase()] || [];
 
-  // Combine common items with role-specific items
+  // For customers and technicians, replace Profile with Dashboard
+  if (normalizedRole === 'customer') {
+    const customerCommonItems: MenuItem[] = [
+      {
+        path: '/dashboard/customer',
+        label: 'Dashboard',
+        icon: '🏠',
+      },
+    ];
+    return [...customerCommonItems, ...roleSpecificItems];
+  }
+
+  if (normalizedRole === 'technician') {
+    const technicianCommonItems: MenuItem[] = [
+      {
+        path: '/dashboard/technician',
+        label: 'Dashboard',
+        icon: '🏠',
+      },
+    ];
+    return [...technicianCommonItems, ...roleSpecificItems];
+  }
+
+  // For other roles, combine common items with role-specific items
   return [...commonMenuItems, ...roleSpecificItems];
 };
 

@@ -131,3 +131,81 @@ api.interceptors.response.use(
 
 export default api;
 
+/**
+ * Submit a new case (Mock implementation until backend is ready)
+ * This function simulates API call and stores data in localStorage
+ */
+export interface SubmitCaseData {
+  issue_type: string;
+  description: string;
+  location: string;
+  image?: File;
+}
+
+export interface SubmitCaseResponse {
+  id: string;
+  userId: string;
+  type: string;
+  description: string;
+  location: string;
+  image?: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const submitCase = async (data: SubmitCaseData): Promise<SubmitCaseResponse> => {
+  // Import mock data utilities
+  const { saveCase, fileToBase64 } = await import('../utils/mockData');
+
+  // Simulate API delay (1-2 seconds)
+  await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+  // Get current user ID from token (mock - in real app, decode JWT)
+  let userId = 'anonymous';
+  
+  // Try to get user ID from sessionStorage or token
+  try {
+    const userData = sessionStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      userId = user.id || userId;
+    }
+  } catch (error) {
+    console.warn('Could not get user ID from sessionStorage');
+  }
+
+  // Convert image to base64 if provided
+  let imageBase64: string | undefined;
+  if (data.image) {
+    try {
+      imageBase64 = await fileToBase64(data.image);
+    } catch (error) {
+      console.error('Error converting image to base64:', error);
+      // Continue without image if conversion fails
+    }
+  }
+
+  // Save case to mock storage
+  const newCase = saveCase({
+    userId,
+    type: data.issue_type,
+    description: data.description,
+    location: data.location,
+    image: imageBase64,
+  });
+
+  // Return response in API format
+  return {
+    id: newCase.id,
+    userId: newCase.userId,
+    type: newCase.type,
+    description: newCase.description,
+    location: newCase.location,
+    image: newCase.image,
+    status: newCase.status,
+    createdAt: newCase.createdAt,
+    updatedAt: newCase.updatedAt,
+  };
+};
+

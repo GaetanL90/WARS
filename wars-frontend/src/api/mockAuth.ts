@@ -311,7 +311,7 @@ export const mockResendOTP = async (email: string): Promise<{
 export const mockRequestPasswordReset = async (email: string): Promise<{
   message: string;
 }> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     setTimeout(() => {
       const user = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
 

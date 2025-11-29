@@ -1,12 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { setCookie, getCookie, deleteCookie, clearAuthCookies } from '../utils/cookies';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { setCookie, getCookie, clearAuthCookies } from '../utils/cookies';
+import { getUserProfile, saveUserProfile } from '../utils/mockData';
 
 interface User {
   id: string;
   email: string;
   role: string;
   name?: string;
-  // Add other user properties as needed
+  phone?: string;
+  profileImage?: string;
 }
 
 interface JWTPayload {
@@ -34,6 +37,7 @@ interface AuthContextType {
   getRefreshToken: () => string | null;
   updateAccessToken: (newAccessToken: string) => void;
   updateRefreshToken: (newRefreshToken: string) => void;
+  updateUserProfile: (updates: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -95,11 +99,32 @@ const decodeJWT = (token: string): JWTPayload | null => {
 const extractUserFromToken = (payload: JWTPayload): User | null => {
   if (!payload) return null;
 
+  // Try to load profile from mock storage
+  const userId = payload.user_id || payload.id || '';
+  let profileData: Partial<User> = {};
+  
+  if (userId) {
+    try {
+      const profile = getUserProfile(userId);
+      if (profile) {
+        profileData = {
+          name: profile.name,
+          phone: profile.phone,
+          profileImage: profile.profileImage,
+        };
+      }
+    } catch (error) {
+      // Profile not found or error loading, use defaults
+    }
+  }
+
   return {
-    id: payload.user_id || payload.id || '',
+    id: userId,
     email: payload.email || '',
     role: payload.role || '',
-    name: payload.name || payload.username || '',
+    name: payload.name || payload.username || profileData.name || '',
+    phone: profileData.phone,
+    profileImage: profileData.profileImage,
   };
 };
 
@@ -140,6 +165,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Save token to cookies for page refresh persistence (7 days expiry)
       setCookie('accessToken', token, 7);
       setCookie('userData', JSON.stringify(userData), 7);
+      
+      // Save initial profile to mock storage if it doesn't exist
+      try {
+        const existingProfile = getUserProfile(userData.id);
+        if (!existingProfile) {
+          saveUserProfile({
+            id: userData.id,
+            email: userData.email,
+            name: userData.name || '',
+            phone: userData.phone,
+            profileImage: userData.profileImage,
+            role: userData.role,
+          });
+        }
+      } catch (error) {
+        // Ignore errors during initial profile save
+      }
     } else {
       console.error('Invalid user data in JWT token');
     }
@@ -278,6 +320,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setCookie('refreshToken', newRefreshToken, 7);
   };
 
+  const updateUserProfile = (updates: Partial<User>) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    
+    // Update userData in cookie
+    setCookie('userData', JSON.stringify(updatedUser), 7);
+    
+    // Save to mock storage
+    try {
+      saveUserProfile({
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name || '',
+        phone: updatedUser.phone,
+        profileImage: updatedUser.profileImage,
+        role: updatedUser.role,
+      });
+    } catch (error) {
+      console.error('Error saving user profile:', error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     role,
@@ -293,6 +359,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     getRefreshToken,
     updateAccessToken,
     updateRefreshToken,
+    updateUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

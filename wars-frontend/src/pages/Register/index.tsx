@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Container, Row, Col, Card, Form, Button, Alert } from 'react-bootstrap';
 
 const Register: React.FC = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -26,7 +28,7 @@ const Register: React.FC = () => {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('auth.register.passwordsDoNotMatch'));
       return;
     }
 
@@ -48,7 +50,7 @@ const Register: React.FC = () => {
       // Redirect to OTP verification
       navigate('/otp', { state: { email: formData.email } });
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || t('auth.register.registrationFailed'));
     } finally {
       setLoading(false);
     }
@@ -60,17 +62,17 @@ const Register: React.FC = () => {
         <Col md={6} lg={5}>
           <Card>
             <Card.Body>
-              <Card.Title className="text-center mb-4">Registration</Card.Title>
+              <Card.Title className="text-center mb-4">{t('auth.register.title')}</Card.Title>
               
               {error && <Alert variant="danger">{error}</Alert>}
               
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Full Name</Form.Label>
+                  <Form.Label>{t('auth.register.fullName')}</Form.Label>
                   <Form.Control
                     type="text"
                     name="name"
-                    placeholder="Enter full name"
+                    placeholder={t('auth.register.enterFullName')}
                     value={formData.name}
                     onChange={handleChange}
                     required
@@ -78,11 +80,11 @@ const Register: React.FC = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Email</Form.Label>
+                  <Form.Label>{t('auth.register.email')}</Form.Label>
                   <Form.Control
                     type="email"
                     name="email"
-                    placeholder="Enter email"
+                    placeholder={t('auth.register.enterEmail')}
                     value={formData.email}
                     onChange={handleChange}
                     required
@@ -90,11 +92,11 @@ const Register: React.FC = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Phone</Form.Label>
+                  <Form.Label>{t('auth.register.phone')}</Form.Label>
                   <Form.Control
                     type="tel"
                     name="phone"
-                    placeholder="Enter phone number"
+                    placeholder={t('auth.register.enterPhone')}
                     value={formData.phone}
                     onChange={handleChange}
                     required
@@ -102,11 +104,11 @@ const Register: React.FC = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Password</Form.Label>
+                  <Form.Label>{t('auth.register.password')}</Form.Label>
                   <Form.Control
                     type="password"
                     name="password"
-                    placeholder="Enter password"
+                    placeholder={t('auth.register.enterPassword')}
                     value={formData.password}
                     onChange={handleChange}
                     required
@@ -114,11 +116,11 @@ const Register: React.FC = () => {
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                  <Form.Label>Confirm Password</Form.Label>
+                  <Form.Label>{t('auth.register.confirmPassword')}</Form.Label>
                   <Form.Control
                     type="password"
                     name="confirmPassword"
-                    placeholder="Confirm password"
+                    placeholder={t('auth.register.confirmPasswordPlaceholder')}
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
@@ -127,12 +129,12 @@ const Register: React.FC = () => {
 
                 <div className="d-grid mb-3">
                   <Button variant="primary" type="submit" disabled={loading}>
-                    {loading ? 'Registering...' : 'Register'}
+                    {loading ? t('auth.register.registering') : t('auth.register.register')}
                   </Button>
                 </div>
 
                 <div className="text-center">
-                  <Link to="/login">Already have an account? Login</Link>
+                  <Link to="/login">{t('auth.register.haveAccount')}</Link>
                 </div>
               </Form>
             </Card.Body>

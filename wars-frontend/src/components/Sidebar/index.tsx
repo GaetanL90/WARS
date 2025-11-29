@@ -1,37 +1,32 @@
 import React from 'react';
 import { Nav } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { getMenuItemsForRole } from '../../utils/menuConfig';
 
 interface SidebarProps {
   isOpen?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen = true }) => {
-  const { user } = useAuth();
+  const { role } = useAuth();
+  const { t } = useTranslation();
   const location = useLocation();
 
-  const getDashboardPath = () => {
-    if (!user) return '/';
-    const role = user.role.toLowerCase();
-    // Map role to dashboard path
-    const roleMap: Record<string, string> = {
-      'admin': '/dashboard/admin',
-      'technician': '/dashboard/technician',
-      'responsible': '/dashboard/responsible',
-      'customer': '/dashboard/customer',
-      'wasac_manager': '/dashboard/wasac-manager',
-      'wasac': '/dashboard/wasac-manager',
-    };
-    return roleMap[role] || '/dashboard/customer';
-  };
+  const menuItems = getMenuItemsForRole(role);
 
-  const menuItems = [
-    { path: getDashboardPath(), label: 'Dashboard', icon: '📊' },
-    { path: '/cases', label: 'Cases', icon: '📋' },
-    { path: '/reports', label: 'Reports', icon: '📈' },
-    { path: '/profile', label: 'Profile', icon: '👤' },
-  ];
+  // Translation map for menu items
+  const menuTranslations: Record<string, string> = {
+    'Report Issue': t('menu.reportIssue'),
+    'My Cases': t('menu.myCases'),
+    'Assigned Cases': t('menu.assignedCases'),
+    'Cases': t('menu.cases'),
+    'Users': t('menu.users'),
+    'Profile': t('menu.profile'),
+    'Dashboard': t('common.dashboard'),
+    'Sensor Monitoring': t('menu.sensorMonitoring'),
+  };
 
   if (!isOpen) return null;
 
@@ -46,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen = true }) => {
           className="mb-2"
         >
           <span className="me-2">{item.icon}</span>
-          {item.label}
+          {menuTranslations[item.label] || item.label}
         </Nav.Link>
       ))}
     </Nav>

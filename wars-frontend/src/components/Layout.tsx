@@ -268,7 +268,7 @@ export function Layout() {
                   <Link to="/settings" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>Settings</Link>
                   <div className="dropdown-divider"></div>
                   <Link to="/" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>
-                    Back to landing page
+                    Home
                   </Link>
                   <button className="dropdown-item text-danger" onClick={logout}>
                     Logout

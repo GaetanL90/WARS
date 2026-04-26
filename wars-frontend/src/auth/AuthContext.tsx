@@ -6,7 +6,7 @@ interface AuthContextValue {
   auth: AuthState | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (payload: LoginPayload) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<AuthState>;
   logout: () => void;
   hasAnyRole: (roles: UserRole[]) => boolean;
 }
@@ -31,10 +31,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (payload: LoginPayload) => {
+  const login = async (payload: LoginPayload): Promise<AuthState> => {
     const nextAuth = await loginRequest(payload);
     setAuth(nextAuth);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nextAuth));
+    return nextAuth;
   };
 
   const logout = () => {

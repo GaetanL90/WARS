@@ -1,34 +1,28 @@
 {
   "name": "wars-frontend",
+  "version": "1.0.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "description": "Clean WARS frontend with role-based authentication",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc -b && vite build",
     "preview": "vite preview"
   },
-  "devDependencies": {
-    "@types/react": "^19.2.6",
-    "@types/react-dom": "^19.2.3",
-    "eslint": "^9.39.1",
-    "prettier": "^3.6.2",
-    "typescript": "~5.9.3",
-    "vite": "^7.2.4"
-  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
   "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
-    "axios": "^1.13.2",
-    "bootstrap": "^5.3.8",
-    "i18next": "^25.6.3",
-    "i18next-browser-languagedetector": "^8.2.0",
-    "react": "^19.2.0",
-    "react-bootstrap": "^2.10.10",
-    "react-dom": "^19.2.0",
-    "react-hook-form": "^7.67.0",
-    "react-i18next": "^16.3.5",
-    "react-router-dom": "^7.9.6",
-    "recharts": "^3.5.1",
-    "zod": "^4.1.13"
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.14.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10"
   }
 }

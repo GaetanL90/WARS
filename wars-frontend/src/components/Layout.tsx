@@ -73,6 +73,23 @@ function WrenchIcon() {
   );
 }
 
+function UserIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      {/* User silhouette */}
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+      <circle cx="12" cy="7" r="4"></circle>
+      {/* Larger Gear/Settings icon in front (bottom right) */}
+      <circle cx="17.5" cy="17.5" r="4.5" fill="#ffffff" stroke="none"></circle>
+      <circle cx="17.5" cy="17.5" r="4.5" stroke="currentColor" strokeWidth="1.8"></circle>
+      {/* Gear teeth */}
+      <path d="M17.5 13v9M13 17.5h9" stroke="currentColor" strokeWidth="1.8"></path>
+      <path d="M14.3 14.3l6.4 6.4M20.7 14.3l-6.4 6.4" stroke="currentColor" strokeWidth="1.8"></path>
+      <circle cx="17.5" cy="17.5" r="1.5" fill="#ffffff" stroke="currentColor" strokeWidth="1"></circle>
+    </svg>
+  );
+}
+
 export function Layout() {
   const { auth, logout, hasAnyRole } = useAuth();
   const [isSidenavOpen, setIsSidenavOpen] = useState(true);
@@ -234,8 +251,10 @@ export function Layout() {
             </div>
 
             <div className="account-menu-container" ref={accountMenuRef}>
-              <button className="account-btn" onClick={() => { setIsAccountMenuOpen(!isAccountMenuOpen); setIsNotificationOpen(false); }}>
-                <div className="avatar-small">{initial}</div>
+              <button className="account-btn" onClick={() => { setIsAccountMenuOpen(!isAccountMenuOpen); setIsNotificationOpen(false); }} aria-label="Account Menu">
+                <div className="account-icon-wrapper">
+                  <UserIcon />
+                </div>
               </button>
 
               {isAccountMenuOpen && (

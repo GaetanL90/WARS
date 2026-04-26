@@ -5,7 +5,17 @@ import bustedPipeImage from "../assets/bursted_pipe.jpg";
 import contaminatedTapImage from "../assets/solving-brown-water-from-tap.jpg";
 
 export function HomePage() {
-  const { isAuthenticated } = useAuth();
+  const { auth, isAuthenticated } = useAuth();
+  
+  const getDashboardLink = () => {
+    if (!isAuthenticated) return "/login";
+    const role = auth?.user?.role;
+    if (role === "citizen") return "/reports/new";
+    if (role === "technician") return "/reports/assigned";
+    return "/portal";
+  };
+  
+  const dashboardLink = getDashboardLink();
 
   return (
     <main className="landing">
@@ -21,7 +31,7 @@ export function HomePage() {
           <a href="#what">What we solve</a>
           <a href="#how">How it works</a>
           <a href="#rewards">Rewards</a>
-          <Link className="btn-link primary" to={isAuthenticated ? "/portal" : "/login"}>
+          <Link className="btn-link primary" to={dashboardLink}>
             {isAuthenticated ? "Dashboard" : "Login"}
           </Link>
         </nav>
@@ -36,7 +46,7 @@ export function HomePage() {
             reports are routed to response teams so issues are verified and fixed faster.
           </p>
           <div className="actions">
-            <Link className="btn-link primary" to={isAuthenticated ? "/portal" : "/login"}>
+            <Link className="btn-link primary" to={dashboardLink}>
               {isAuthenticated ? "Open dashboard" : "Start reporting"}
             </Link>
             <a className="btn-link secondary" href="#how">
@@ -165,7 +175,7 @@ export function HomePage() {
 
       <footer className="landing-footer">
         <p>WARS - Community-driven reporting for safer public water.</p>
-        <Link to={isAuthenticated ? "/portal" : "/login"}>{isAuthenticated ? "Go to dashboard" : "Login to continue"}</Link>
+        <Link to={dashboardLink}>{isAuthenticated ? "Go to dashboard" : "Login to continue"}</Link>
       </footer>
     </main>
   );

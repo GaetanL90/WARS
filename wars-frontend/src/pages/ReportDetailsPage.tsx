@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 type InternalStatus = "new" | "pending" | "assigned" | "returned" | "escalated" | "resolved";
 type CitizenStatus = "New" | "Pending" | "Resolved";
+type Urgency = "critical" | "high" | "medium" | "low";
 
 interface ReportDetails {
   id: number;
@@ -11,10 +12,11 @@ interface ReportDetails {
   internal_status: InternalStatus;
   reported_at: string;
   description: string;
-  location: string;
-  location_detail?: string;
-  phone: string;
   image_path?: string;
+  urgency?: Urgency;
+  is_assigned_to_me?: boolean;
+  resolved_at?: string;
+  returned_at?: string;
 }
 
 const MOCK_REPORTS: Record<number, ReportDetails> = {
@@ -23,27 +25,28 @@ const MOCK_REPORTS: Record<number, ReportDetails> = {
     issue_type: "Pipe Burst",
     internal_status: "resolved",
     reported_at: "2024-03-20 14:30",
-    description: "Main pipe leaking near the primary school. It's wasting a lot of water and creating a muddy area.",
+    description: "Main pipe leaking near the primary school.",
     location: "Kagarama, Kanserege, Marembo",
-    location_detail: "Near the school gate, Block B",
     phone: "+250788123456",
-    image_path: "https://images.unsplash.com/photo-1585706569097-bd152146847f?auto=format&fit=crop&q=80&w=800"
+    resolved_at: "2024-03-21 10:00"
   },
   1025: {
     id: 1025,
     issue_type: "Water Contamination",
     internal_status: "assigned",
     reported_at: "2024-03-22 09:15",
-    description: "Brown water coming from the tap since morning. We can't use it for drinking or cooking.",
+    description: "Brown water coming from the tap since morning.",
     location: "Remera, Nyarutarama, Rukiri I",
-    phone: "+250788123456"
+    phone: "+250788123456",
+    urgency: "critical",
+    is_assigned_to_me: true
   },
   1028: {
     id: 1028,
     issue_type: "No Water",
     internal_status: "new",
     reported_at: "2024-03-25 18:45",
-    description: "Total water outage for the last 12 hours. The whole neighborhood is affected.",
+    description: "Total water outage for the last 12 hours.",
     location: "Kimironko, Bibare, Kibagabaga",
     phone: "+250788123456"
   }
@@ -52,11 +55,17 @@ const MOCK_REPORTS: Record<number, ReportDetails> = {
 export function ReportDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { auth } = useAuth();
   const [report, setReport] = useState<ReportDetails | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  
+  // Status update states
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [newStatus, setNewStatus] = useState<"resolved" | "returned">("resolved");
+  const [isSavingStatus, setIsSavingStatus] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -83,6 +92,16 @@ export function ReportDetailsPage() {
     return "Pending";
   };
 
+  const getUrgencyClass = (urgency: Urgency) => {
+    switch (urgency) {
+      case "critical": return "urgency-critical";
+      case "high": return "urgency-high";
+      case "medium": return "urgency-medium";
+      case "low": return "urgency-low";
+      default: return "";
+    }
+  };
+
   const citizenStatus = mapToCitizenStatus(report.internal_status);
 
   const getStatusStepClass = (stepStatus: CitizenStatus) => {
@@ -102,39 +121,48 @@ export function ReportDetailsPage() {
     }, 1200);
   };
 
+  const handleUpdateStatus = () => {
+    setIsSavingStatus(true);
+    setTimeout(() => {
+      setReport(prev => prev ? { ...prev, internal_status: newStatus } : null);
+      setIsSavingStatus(false);
+      setShowUpdateModal(false);
+    }, 800);
+  };
+
+  const isTechnicianView = auth?.user?.role === "technician" && report.is_assigned_to_me;
+
   return (
     <div className="page-container">
       <div className="detail-header">
-        <button onClick={() => navigate("/reports/my")} className="btn-back">
+        <button onClick={() => navigate(-1)} className="btn-back">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
-          Back to Reports
+          Back
         </button>
         <div className="header-title-row">
-          <h1>Report #{report.id}</h1>
+          <div className="flex-column">
+            <h1>Report #{report.id}</h1>
+            {isTechnicianView && <span className="badge badge-primary">Assigned Case</span>}
+          </div>
           <div className="header-actions">
-            {report.internal_status === "new" && (
+            {report.internal_status === "new" && !isTechnicianView && (
               <div className="action-button-group">
                 <button className="btn btn-outline btn-with-icon" onClick={() => navigate(`/reports/edit/${report.id}`)}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                  Edit Report
+                  Edit
                 </button>
                 <div className="action-divider"></div>
                 <button className="btn btn-danger-outline btn-with-icon" onClick={() => setShowDeleteModal(true)}>
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                  Delete Report
+                  Delete
                 </button>
               </div>
+            )}
+            {isTechnicianView && report.internal_status === "assigned" && (
+              <button className="btn btn-primary" onClick={() => setShowUpdateModal(true)}>
+                Update Status
+              </button>
             )}
           </div>
         </div>
@@ -147,12 +175,12 @@ export function ReportDetailsPage() {
             <div className="tracker-steps">
               <div className={`tracker-step ${getStatusStepClass("New")}`}>
                 <div className="step-marker">1</div>
-                <div className="step-label">Submitted (New)</div>
+                <div className="step-label">Submitted</div>
               </div>
               <div className="step-line"></div>
               <div className={`tracker-step ${getStatusStepClass("Pending")}`}>
                 <div className="step-marker">2</div>
-                <div className="step-label">Processing (Pending)</div>
+                <div className="step-label">Processing</div>
               </div>
               <div className="step-line"></div>
               <div className={`tracker-step ${getStatusStepClass("Resolved")}`}>
@@ -166,6 +194,12 @@ export function ReportDetailsPage() {
           <div className="report-content-card card">
             <div className="content-section">
               <h3>Issue Details</h3>
+              {report.urgency && (
+                <div className="detail-row">
+                  <span className="detail-label">Urgency</span>
+                  <span className={`urgency-pill ${getUrgencyClass(report.urgency)}`}>{report.urgency}</span>
+                </div>
+              )}
               <div className="detail-row">
                 <span className="detail-label">Issue Type</span>
                 <span className="detail-value highlight">{report.issue_type}</span>
@@ -174,6 +208,18 @@ export function ReportDetailsPage() {
                 <span className="detail-label">Reported At</span>
                 <span className="detail-value">{report.reported_at}</span>
               </div>
+              {report.resolved_at && (
+                <div className="detail-row">
+                  <span className="detail-label">Resolved At</span>
+                  <span className="detail-value">{report.resolved_at}</span>
+                </div>
+              )}
+              {report.returned_at && (
+                <div className="detail-row">
+                  <span className="detail-label">Returned At</span>
+                  <span className="detail-value">{report.returned_at}</span>
+                </div>
+              )}
               <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
                 <span className="detail-label">Description</span>
                 <p className="detail-description">{report.description}</p>
@@ -188,29 +234,11 @@ export function ReportDetailsPage() {
                 <span className="detail-label">Village Location</span>
                 <span className="detail-value">{report.location}</span>
               </div>
-              {report.location_detail && (
-                <div className="detail-row">
-                  <span className="detail-label">Specific Details</span>
-                  <span className="detail-value">{report.location_detail}</span>
-                </div>
-              )}
               <div className="detail-row">
                 <span className="detail-label">Contact Phone</span>
                 <span className="detail-value">{report.phone}</span>
               </div>
             </div>
-
-            {report.image_path && (
-              <>
-                <div className="report-divider" />
-                <div className="content-section">
-                  <h3>Photo Evidence</h3>
-                  <div className="detail-image-wrapper" onClick={() => setIsAvatarModalOpen(true)} style={{ cursor: 'pointer' }}>
-                    <img src={report.image_path} alt="Evidence" />
-                  </div>
-                </div>
-              </>
-            )}
           </div>
         </div>
 
@@ -222,75 +250,52 @@ export function ReportDetailsPage() {
                 citizenStatus === "New" ? "status-pending" : 
                 citizenStatus === "Resolved" ? "status-resolved" : "status-assigned"
               }`} style={{ fontSize: '1rem', padding: '8px 16px' }}>
-                {citizenStatus}
+                {report.internal_status.toUpperCase()}
               </span>
             </div>
             <p style={{ fontSize: '0.85rem', color: '#5f768f', marginTop: '16px', lineHeight: '1.5' }}>
-              {citizenStatus === "New" && "Your report has been submitted and is waiting for initial review by the admin team."}
-              {citizenStatus === "Pending" && "A technician has been assigned and is currently working on resolving the issue."}
-              {citizenStatus === "Resolved" && "The issue has been marked as resolved. If you still experience problems, please submit a new report."}
+              {report.internal_status === "new" && "Waiting for initial review."}
+              {report.internal_status === "assigned" && "A technician is working on this."}
+              {report.internal_status === "resolved" && "The issue has been resolved."}
+              {report.internal_status === "returned" && "Requires more information from the citizen."}
             </p>
-          </div>
-
-          <div className="info-card card" style={{ marginTop: '20px' }}>
-            <h4>Track History</h4>
-            <div className="history-timeline">
-              <div className="timeline-item">
-                <div className="timeline-point"></div>
-                <div className="timeline-content">
-                  <span className="timeline-date">{report.reported_at}</span>
-                  <span className="timeline-text">Report submitted by {auth?.user?.name || "citizen"}</span>
-                </div>
-              </div>
-              {report.internal_status !== "new" && (
-                <div className="timeline-item">
-                  <div className="timeline-point"></div>
-                  <div className="timeline-content">
-                    <span className="timeline-date">Processing Started</span>
-                    <span className="timeline-text">Report was confirmed and moved to pending</span>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </aside>
       </div>
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
+
+      {/* Modals */}
+      {showUpdateModal && (
         <div className="modal-overlay">
-          <div className="modal-content warning-modal">
-            <div className="warning-icon">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <h2>Update Status</h2>
+            <div className="filter-group mb-24 mt-16">
+              <label>New Status</label>
+              <select value={newStatus} onChange={e => setNewStatus(e.target.value as any)} className="input-field">
+                <option value="resolved">Resolved</option>
+                <option value="returned">Return (Needs info)</option>
+              </select>
             </div>
-            <h2>Delete Report?</h2>
-            <p>Are you sure you want to delete this report? This action is permanent and cannot be undone.</p>
             <div className="modal-footer">
-              <button className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting ? "Deleting..." : "Yes, Delete Report"}
+              <button className="btn btn-primary" onClick={handleUpdateStatus} disabled={isSavingStatus}>
+                {isSavingStatus ? "Saving..." : "Confirm Update"}
               </button>
-              <button className="btn btn-outline" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
-                Cancel
-              </button>
+              <button className="btn btn-outline" onClick={() => setShowUpdateModal(false)}>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {isAvatarModalOpen && report.image_path && (
-        <div className="modal-overlay" onClick={() => setIsAvatarModalOpen(false)}>
-          <div className="modal-content" style={{ maxWidth: '800px', padding: '0', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
-            <img src={report.image_path} alt="Full size evidence" style={{ width: '100%', display: 'block' }} />
-            <button 
-              className="modal-close-btn" 
-              onClick={() => setIsAvatarModalOpen(false)}
-              style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '20px' }}
-            >
-              ×
-            </button>
+      {showDeleteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content warning-modal">
+            <h2>Delete Report?</h2>
+            <p>This action cannot be undone.</p>
+            <div className="modal-footer">
+              <button className="btn btn-danger" onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+              <button className="btn btn-outline" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+            </div>
           </div>
         </div>
       )}

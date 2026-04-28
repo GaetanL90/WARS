@@ -1512,6 +1512,42 @@ button {
   margin-bottom: 16px;
 }
 
+/* Urgency Pills */
+.urgency-pill {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.urgency-critical {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fee2e2;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+}
+
+.urgency-high {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+}
+
+.urgency-medium {
+  background: #fefce8;
+  color: #ca8a04;
+  border: 1px solid #fef9c3;
+}
+
+.urgency-low {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #dcfce7;
+}
+
 .settings-card-header .subtitle {
   font-size: 0.85rem;
   color: #5f768f;
@@ -1841,18 +1877,46 @@ button {
 .reports-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
 }
 
 .reports-table th {
+  text-align: left;
+  padding: 16px 12px;
   background: #f8fafc;
-  padding: 16px 24px;
+  color: #5f768f;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #5f768f;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #e0e9f6;
+  border-bottom: 2px solid #e0e9f6;
+  white-space: nowrap;
+}
+
+.reports-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s;
+}
+
+.reports-table th.sortable:hover {
+  background: #f1f5f9;
+  color: #1d4ed8;
+}
+
+.sort-icon {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: middle;
+  opacity: 0.4;
+}
+
+.sortable:hover .sort-icon {
+  opacity: 1;
+}
+
+.sort-active .sort-icon {
+  opacity: 1;
+  color: #1d4ed8;
 }
 
 .reports-table td {
@@ -1866,8 +1930,130 @@ button {
   border-bottom: none;
 }
 
+@media (max-width: 768px) {
+  .reports-table, .reports-table thead, .reports-table tbody, .reports-table th, .reports-table td, .reports-table tr {
+    display: block;
+  }
+
+  .reports-table thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  .reports-table tr {
+    border: 1px solid #e0e9f6;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    padding: 8px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(10, 35, 66, 0.02);
+  }
+
+  .reports-table td {
+    border: none;
+    border-bottom: 1px solid #f0f4f9;
+    position: relative;
+    padding-left: 50% !important;
+    text-align: right;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .reports-table td:last-child {
+    border-bottom: none;
+  }
+
+  .reports-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 12px;
+    width: 45%;
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: 700;
+    color: #5f768f;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+}
+
 .reports-table tr:hover {
   background: #fcfdfe;
+}
+
+/* Filters & Pagination */
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #5f768f;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid #f0f4f9;
+}
+
+.pagination-btn {
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid #dbe5f2;
+  color: #1d4ed8;
+  font-weight: 600;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #94a3b8;
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: #5f768f;
+}
+
+.pagination-info strong {
+  color: #10233c;
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+  
+  .pagination-btn {
+    width: 100%;
+  }
 }
 
 .id-badge {

@@ -13,6 +13,8 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { SubmitReportPage } from "./pages/SubmitReportPage";
 import { MyReportsPage } from "./pages/MyReportsPage";
 import { ReportDetailsPage } from "./pages/ReportDetailsPage";
+import { AssignedReportsPage } from "./pages/AssignedReportsPage";
+import { CaseReportsPage } from "./pages/CaseReportsPage";
 
 export function AppRouter() {
   return (
@@ -25,22 +27,22 @@ export function AppRouter() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
-          <Route path="/portal" element={<PortalPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/reports/new" element={<SubmitReportPage />} />
-          <Route path="/reports/edit/:id" element={<SubmitReportPage />} />
-          <Route path="/reports/my" element={<MyReportsPage />} />
+          <Route element={<ProtectedRoute allowedRoles={["citizen", "technician"]} />}>
+            <Route path="/reports/new" element={<SubmitReportPage />} />
+            <Route path="/reports/edit/:id" element={<SubmitReportPage />} />
+            <Route path="/reports/my" element={<MyReportsPage />} />
+          </Route>
           <Route path="/reports/:id" element={<ReportDetailsPage />} />
-          <Route path="/reports/assigned" element={<div className="page-container"><div className="page-header"><h1>Assigned Reports</h1><p>View and manage reports assigned to you.</p></div></div>} />
-        </Route>
-      </Route>
-
-      <Route
-        element={<ProtectedRoute allowedRoles={["manager", "admin"]} />}
-      >
-        <Route element={<Layout />}>
-          <Route path="/analytics" element={<div className="card">Analytics page placeholder</div>} />
+          <Route element={<ProtectedRoute allowedRoles={["technician"]} />}>
+            <Route path="/reports/assigned" element={<AssignedReportsPage />} />
+            <Route path="/reports/history" element={<CaseReportsPage />} />
+          </Route>
+          <Route element={<ProtectedRoute allowedRoles={["manager", "admin"]} />}>
+            <Route path="/portal" element={<PortalPage />} />
+            <Route path="/analytics" element={<div className="card">Analytics page placeholder</div>} />
+          </Route>
         </Route>
       </Route>
 

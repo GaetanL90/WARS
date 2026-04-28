@@ -172,11 +172,19 @@ export function Layout() {
             <>
               <Link to="/reports/assigned" className={`nav-item ${location.pathname === "/reports/assigned" ? "active" : ""}`}>
                 <WrenchIcon />
-                <span>Assigned Reports</span>
+                <span>Assigned Case</span>
+              </Link>
+              <Link to="/reports/new" className={`nav-item ${location.pathname === "/reports/new" ? "active" : ""}`}>
+                <FilePlusIcon />
+                <span>Submit Report</span>
               </Link>
               <Link to="/reports/my" className={`nav-item ${location.pathname === "/reports/my" ? "active" : ""}`}>
                 <ClipboardListIcon />
-                <span>My Reports</span>
+                <span>Submitted Reports</span>
+              </Link>
+              <Link to="/reports/history" className={`nav-item ${location.pathname === "/reports/history" ? "active" : ""}`}>
+                <LayoutDashboardIcon />
+                <span>Case Reports</span>
               </Link>
             </>
           )}

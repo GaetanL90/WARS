@@ -110,8 +110,8 @@ export function RegisterPage() {
 
   const getPlaceholder = (code: string) => {
     switch (code) {
-      case "+250": return "7XXXXXXXX";
-      case "+1": return "(555) 000-0000";
+      case "+250": return "7XX XXX XXX";
+      case "+1": return "(555) 000 0000";
       case "+44": return "7700 900000";
       case "+33": return "06 12 34 56 78";
       case "+49": return "0151 2345678";

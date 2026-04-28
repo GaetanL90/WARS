@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/api-admin/(.*)",
-      "destination": "https://rwanda-administrative-api.onrender.com/api/$1"
+      "source": "/api-admin/:path*",
+      "destination": "https://rwanda-administrative-api.onrender.com/api/:path*"
     }
   ]
 }

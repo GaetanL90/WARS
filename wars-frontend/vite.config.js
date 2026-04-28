@@ -5,9 +5,14 @@ export default defineConfig({
     server: {
         proxy: {
             '/api-admin': {
-                target: 'https://rwanda-administrative-structure-api.onrender.com/api',
+                target: 'https://rwanda-administrative-api.onrender.com/api',
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api-admin/, '')
+            },
+            '/api/admin': {
+                target: 'https://rwanda-administrative-api.onrender.com/api',
+                changeOrigin: true,
+                rewrite: (path) => path.replace(/^\/api\/admin/, '')
             }
         }
     }

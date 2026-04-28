@@ -6,7 +6,7 @@ import type { RegisterPayload } from "../auth/types";
 import { CountrySelector } from "../components/CountrySelector";
 import { useCountries } from "../hooks/useCountries";
 
-const API_BASE_URL = "/api-admin";
+const API_BASE_URL = "/api/admin";
 
 function isValidPhone(phone: string): boolean {
   return /^[0-9\s()-]{7,15}$/.test(phone.replace(/\D/g, ''));

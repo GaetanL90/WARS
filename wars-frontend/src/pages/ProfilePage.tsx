@@ -127,7 +127,7 @@ export function ProfilePage() {
                 <span>View</span>
               </div>
             </button>
-            {uploadError && <p style={{ color: '#be123c', fontSize: '0.8rem', marginBottom: '8px', textAlign: 'center' }}>{uploadError}</p>}
+            {uploadError && <p className="mb-8 text-danger text-center" style={{ fontSize: '0.8rem' }}>{uploadError}</p>}
             <p className="photo-help-text">Click the avatar to view in full size.</p>
             <input 
               ref={fileInputRef} 
@@ -144,7 +144,7 @@ export function ProfilePage() {
         </div>
         
         <div className="profile-details-card card">
-          <div className="profile-details-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="profile-details-header flex-between">
             <h3>Personal Information</h3>
             <span className="role-pill">{user?.role}</span>
           </div>
@@ -176,7 +176,7 @@ export function ProfilePage() {
               <input type="email" className="input-field" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
 
-            <h4 style={{ marginTop: '24px', marginBottom: '16px', fontSize: '1.05rem', color: '#10233c' }}>Location Details</h4>
+            <h4 className="section-title">Location Details</h4>
             
             <div className="input-grid two">
               <div className="form-group">
@@ -212,9 +212,9 @@ export function ProfilePage() {
               </div>
             </div>
             
-            {successMsg && <div className="success-message" style={{ color: '#10b981', background: '#ecfdf5', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontWeight: 500 }}>{successMsg}</div>}
+            {successMsg && <div className="success-message mb-16 bg-success-light text-success" style={{ padding: '12px', borderRadius: '8px', fontWeight: 500 }}>{successMsg}</div>}
 
-            <div className="form-actions" style={{ marginTop: "16px" }}>
+            <div className="form-actions mt-16">
               <button type="submit" className="btn btn-primary" disabled={isSaving}>
                 {isSaving ? "Saving..." : "Save Changes"}
               </button>

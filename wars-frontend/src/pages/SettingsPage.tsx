@@ -120,19 +120,18 @@ export function SettingsPage() {
           </div>
           
           <form className="profile-form" onSubmit={handlePasswordChange}>
-            {passwordError && <div className="error-message" style={{ marginBottom: "16px" }}>{passwordError}</div>}
-            {passwordSuccess && <div className="success-message" style={{ color: '#10b981', background: '#ecfdf5', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontWeight: 500 }}>{passwordSuccess}</div>}
+            {passwordError && <div className="error-message mb-16">{passwordError}</div>}
+            {passwordSuccess && <div className="success-message mb-16 bg-success-light text-success" style={{ padding: '12px', borderRadius: '8px', fontWeight: 500 }}>{passwordSuccess}</div>}
 
             <div className="form-group">
               <label>Current Password</label>
-              <div className="password-field" style={{ position: 'relative', marginTop: '4px' }}>
+              <div className="password-field mt-4" style={{ position: 'relative' }}>
                 <input 
                   type={showCurrentPassword ? "text" : "password"} 
-                  className="input-field" 
+                  className="input-field w-full" 
                   value={currentPassword} 
                   onChange={e => setCurrentPassword(e.target.value)} 
                   required 
-                  style={{ width: '100%' }}
                 />
                 <button type="button" className="password-visibility" onClick={() => setShowCurrentPassword(!showCurrentPassword)} aria-label="Toggle password visibility" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b829a', padding: 0 }}>
                   {showCurrentPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -143,15 +142,14 @@ export function SettingsPage() {
             <div className="input-grid two">
               <div className="form-group">
                 <label>New Password</label>
-                <div className="password-field" style={{ position: 'relative', marginTop: '4px' }}>
+                <div className="password-field mt-4" style={{ position: 'relative' }}>
                   <input 
                     type={showNewPassword ? "text" : "password"} 
-                    className="input-field" 
+                    className="input-field w-full" 
                     value={newPassword} 
                     onChange={e => setNewPassword(e.target.value)} 
                     required 
                     minLength={8}
-                    style={{ width: '100%' }}
                   />
                   <button type="button" className="password-visibility" onClick={() => setShowNewPassword(!showNewPassword)} aria-label="Toggle password visibility" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b829a', padding: 0 }}>
                     {showNewPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -161,15 +159,14 @@ export function SettingsPage() {
 
               <div className="form-group">
                 <label>Confirm New Password</label>
-                <div className="password-field" style={{ position: 'relative', marginTop: '4px' }}>
+                <div className="password-field mt-4" style={{ position: 'relative' }}>
                   <input 
                     type={showConfirmPassword ? "text" : "password"} 
-                    className="input-field" 
+                    className="input-field w-full" 
                     value={confirmPassword} 
                     onChange={e => setConfirmPassword(e.target.value)} 
                     required 
                     minLength={8}
-                    style={{ width: '100%' }}
                   />
                   <button type="button" className="password-visibility" onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label="Toggle password visibility" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6b829a', padding: 0 }}>
                     {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -178,7 +175,7 @@ export function SettingsPage() {
               </div>
             </div>
 
-            <div className="form-actions" style={{ marginTop: "8px" }}>
+            <div className="form-actions mt-8">
               <button type="submit" className="btn btn-primary" disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}>
                 {isChangingPassword ? "Updating..." : "Update Password"}
               </button>

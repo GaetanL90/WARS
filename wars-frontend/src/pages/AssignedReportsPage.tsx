@@ -11,6 +11,7 @@ interface Report {
   reported_at: string;
   location: string;
   urgency: Urgency;
+  return_reason?: string;
 }
 
 const MOCK_ASSIGNED_REPORTS: Report[] = [
@@ -39,6 +40,7 @@ export function AssignedReportsPage() {
   // Status update states
   const [updatingReport, setUpdatingReport] = useState<Report | null>(null);
   const [newStatus, setNewStatus] = useState<InternalStatus>("resolved");
+  const [returnReason, setReturnReason] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const getUrgencyClass = (urgency: Urgency) => {
@@ -102,10 +104,15 @@ export function AssignedReportsPage() {
         return sortConfig.direction === 'asc' ? valA - valB : valB - valA;
       }
 
-      if (a[sortConfig.key] < b[sortConfig.key]) {
+      const valA = a[sortConfig.key];
+      const valB = b[sortConfig.key];
+
+      if (valA === undefined || valB === undefined) return 0;
+
+      if (valA < valB) {
         return sortConfig.direction === 'asc' ? -1 : 1;
       }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
+      if (valA > valB) {
         return sortConfig.direction === 'asc' ? 1 : -1;
       }
       return 0;
@@ -127,12 +134,17 @@ export function AssignedReportsPage() {
 
   const handleUpdateStatus = () => {
     if (!updatingReport) return;
+    if (newStatus === "returned" && !returnReason.trim()) {
+      alert("Please provide a reason for returning this case.");
+      return;
+    }
     setIsSaving(true);
     
     setTimeout(() => {
-      setReports(prev => prev.map(r => r.id === updatingReport.id ? { ...r, internal_status: newStatus } : r));
+      setReports(prev => prev.map(r => r.id === updatingReport.id ? { ...r, internal_status: newStatus, return_reason: newStatus === "returned" ? returnReason : undefined } : r));
       setIsSaving(false);
       setUpdatingReport(null);
+      setReturnReason("");
     }, 800);
   };
 
@@ -275,9 +287,9 @@ export function AssignedReportsPage() {
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '400px' }}>
             <h2>Update Case #{updatingReport.id}</h2>
-            <p>Select the new status for this case.</p>
+            <p className="mb-16">Select the new status for this case.</p>
             
-            <div className="filter-group mb-24">
+            <div className="filter-group mb-16">
               <label>New Status</label>
               <select 
                 value={newStatus} 
@@ -285,15 +297,29 @@ export function AssignedReportsPage() {
                 className="input-field"
               >
                 <option value="resolved">Resolved</option>
-                <option value="returned">Return (Requires further info)</option>
+                <option value="returned">Return (Escalate to Manager)</option>
               </select>
             </div>
+
+            {newStatus === "returned" && (
+              <div className="filter-group mb-24">
+                <label>Reason for Return</label>
+                <textarea 
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  placeholder="Explain why this case is being returned/escalated..."
+                  className="input-field"
+                  style={{ minHeight: '100px', resize: 'vertical' }}
+                  required
+                />
+              </div>
+            )}
 
             <div className="modal-footer">
               <button className="btn btn-primary" onClick={handleUpdateStatus} disabled={isSaving}>
                 {isSaving ? "Updating..." : "Confirm Update"}
               </button>
-              <button className="btn btn-outline" onClick={() => setUpdatingReport(null)} disabled={isSaving}>
+              <button className="btn btn-outline" onClick={() => { setUpdatingReport(null); setReturnReason(""); }} disabled={isSaving}>
                 Cancel
               </button>
             </div>

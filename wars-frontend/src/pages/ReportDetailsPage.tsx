@@ -20,6 +20,7 @@ interface ReportDetails {
   is_assigned_to_me?: boolean;
   resolved_at?: string;
   returned_at?: string;
+  return_reason?: string;
 }
 
 const MOCK_REPORTS: Record<number, ReportDetails> = {
@@ -52,6 +53,18 @@ const MOCK_REPORTS: Record<number, ReportDetails> = {
     description: "Total water outage for the last 12 hours.",
     location: "Kimironko, Bibare, Kibagabaga",
     phone: "+250788123456"
+  },
+  1027: {
+    id: 1027,
+    issue_type: "No Water",
+    internal_status: "returned",
+    reported_at: "2024-03-24 08:00",
+    description: "Neighbor reported dry taps.",
+    location: "Kimironko, Bibare, Kibagabaga",
+    phone: "+250788123456",
+    returned_at: "2024-03-24 11:30",
+    return_reason: "Escalated to management: Issue requires heavy machinery that is currently unavailable at this station.",
+    is_assigned_to_me: true
   }
 };
 
@@ -66,6 +79,7 @@ export function ReportDetailsPage() {
   // Status update states
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [newStatus, setNewStatus] = useState<"resolved" | "returned">("resolved");
+  const [returnReason, setReturnReason] = useState("");
   const [isSavingStatus, setIsSavingStatus] = useState(false);
 
   useEffect(() => {
@@ -123,11 +137,22 @@ export function ReportDetailsPage() {
   };
 
   const handleUpdateStatus = () => {
+    if (newStatus === "returned" && !returnReason.trim()) {
+      alert("Please provide a reason for return.");
+      return;
+    }
     setIsSavingStatus(true);
     setTimeout(() => {
-      setReport(prev => prev ? { ...prev, internal_status: newStatus } : null);
+      setReport(prev => prev ? { 
+        ...prev, 
+        internal_status: newStatus, 
+        return_reason: newStatus === "returned" ? returnReason : undefined,
+        returned_at: newStatus === "returned" ? new Date().toISOString().replace('T', ' ').substring(0, 16) : prev.returned_at,
+        resolved_at: newStatus === "resolved" ? new Date().toISOString().replace('T', ' ').substring(0, 16) : prev.resolved_at
+      } : null);
       setIsSavingStatus(false);
       setShowUpdateModal(false);
+      setReturnReason("");
     }, 800);
   };
 
@@ -221,7 +246,13 @@ export function ReportDetailsPage() {
                   <span className="detail-value">{report.returned_at}</span>
                 </div>
               )}
-              <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+              {report.return_reason && (
+                <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', background: '#fff1f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecdd3', marginTop: '12px' }}>
+                  <span className="detail-label" style={{ color: '#be123c' }}>Return/Escalation Reason</span>
+                  <p className="detail-description" style={{ color: '#9f1239', fontWeight: 500 }}>{report.return_reason}</p>
+                </div>
+              )}
+              <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginTop: report.return_reason ? '16px' : '0' }}>
                 <span className="detail-label">Description</span>
                 <p className="detail-description">{report.description}</p>
               </div>
@@ -248,8 +279,8 @@ export function ReportDetailsPage() {
             <h4>Current Status</h4>
             <div className="current-status-display">
               <span className={`status-pill ${
-                citizenStatus === "New" ? "status-pending" : 
-                citizenStatus === "Resolved" ? "status-resolved" : "status-assigned"
+                report.internal_status === "resolved" ? "status-resolved" : 
+                report.internal_status === "returned" ? "status-pending" : "status-assigned"
               }`} style={{ fontSize: '1rem', padding: '8px 16px' }}>
                 {report.internal_status.toUpperCase()}
               </span>
@@ -258,7 +289,7 @@ export function ReportDetailsPage() {
               {report.internal_status === "new" && "Waiting for initial review."}
               {report.internal_status === "assigned" && "A technician is working on this."}
               {report.internal_status === "resolved" && "The issue has been resolved."}
-              {report.internal_status === "returned" && "Requires more information from the citizen."}
+              {report.internal_status === "returned" && "This case has been escalated back to management for further action."}
             </p>
           </div>
         </aside>
@@ -269,18 +300,34 @@ export function ReportDetailsPage() {
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: '400px' }}>
             <h2>Update Status</h2>
-            <div className="filter-group mb-24 mt-16">
+            <p className="mb-16">Select the new status for this case.</p>
+            <div className="filter-group mb-16">
               <label>New Status</label>
               <select value={newStatus} onChange={e => setNewStatus(e.target.value as any)} className="input-field">
                 <option value="resolved">Resolved</option>
-                <option value="returned">Return (Needs info)</option>
+                <option value="returned">Return (Escalate to Manager)</option>
               </select>
             </div>
+            
+            {newStatus === "returned" && (
+              <div className="filter-group mb-24">
+                <label>Reason for Return</label>
+                <textarea 
+                  value={returnReason}
+                  onChange={(e) => setReturnReason(e.target.value)}
+                  placeholder="Explain why this case is being returned/escalated..."
+                  className="input-field"
+                  style={{ minHeight: '100px', resize: 'vertical' }}
+                  required
+                />
+              </div>
+            )}
+
             <div className="modal-footer">
               <button className="btn btn-primary" onClick={handleUpdateStatus} disabled={isSavingStatus}>
                 {isSavingStatus ? "Saving..." : "Confirm Update"}
               </button>
-              <button className="btn btn-outline" onClick={() => setShowUpdateModal(false)}>Cancel</button>
+              <button className="btn btn-outline" onClick={() => { setShowUpdateModal(false); setReturnReason(""); }} disabled={isSavingStatus}>Cancel</button>
             </div>
           </div>
         </div>

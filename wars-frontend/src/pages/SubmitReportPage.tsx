@@ -4,9 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 import { CountrySelector } from "../components/CountrySelector";
 import { useCountries } from "../hooks/useCountries";
 
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? "/api-admin"
-  : "https://rwanda-administrative-api.onrender.com/api";
+const API_BASE_URL = "/api-admin";
 
 const ISSUE_TYPES = [
   { value: "contamination", label: "Water Contamination" },

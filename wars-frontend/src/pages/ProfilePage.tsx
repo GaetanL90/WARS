@@ -3,7 +3,7 @@ import { useAuth } from "../auth/AuthContext";
 import { useCountries } from "../hooks/useCountries";
 import { CountrySelector } from "../components/CountrySelector";
 
-const API_BASE_URL = "/api/admin";
+const API_BASE_URL = "https://rwanda-administrative-api.onrender.com/api";
 
 interface AdminEntity {
   id: number;

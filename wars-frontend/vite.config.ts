@@ -3,18 +3,4 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  server: {
-    proxy: {
-      '/api-admin': {
-        target: 'https://rwanda-administrative-api.onrender.com/api',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api-admin/, '')
-      },
-      '/api/admin': {
-        target: 'https://rwanda-administrative-api.onrender.com/api',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/admin/, '')
-      }
-    }
-  }
 });

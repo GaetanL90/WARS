@@ -5,12 +5,11 @@ import { useAuth } from "../auth/AuthContext";
 import type { RegisterPayload } from "../auth/types";
 import { CountrySelector } from "../components/CountrySelector";
 import { useCountries } from "../hooks/useCountries";
+import { validatePhone, validateEmail, validatePassword, getMaxLengthForCountry } from "../utils/validation";
 
 const API_BASE_URL = "/api-admin";
 
-function isValidPhone(phone: string): boolean {
-  return /^[0-9\s()-]{7,15}$/.test(phone.replace(/\D/g, ''));
-}
+// Removed local isValidPhone in favor of utils/validation
 
 const RESEND_COOLDOWN_SECONDS = [30, 60, 300];
 const OTP_COOLDOWN_STORAGE_KEY = "wars-register-otp-cooldown";
@@ -91,7 +90,15 @@ export function RegisterPage() {
   // Country Codes State
   const { countries, loading: loadingCountries } = useCountries();
   const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
+  const [selectedIsoCode, setSelectedIsoCode] = useState("RW");
   const [phoneNoPrefix, setPhoneNoPrefix] = useState("");
+
+  const [fieldErrors, setFieldErrors] = useState<{
+    phoneNumber?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
 
   const [form, setForm] = useState<RegisterPayload & { province?: string }>({
     firstName: "",
@@ -110,14 +117,10 @@ export function RegisterPage() {
 
   const getPlaceholder = (code: string) => {
     switch (code) {
-      case "+250": return "7XX XXX XXX";
-      case "+1": return "(555) 000 0000";
+      case "+250": return "78X XXX XXX";
+      case "+1": return "555 000 0000";
       case "+44": return "7700 900000";
       case "+33": return "06 12 34 56 78";
-      case "+49": return "0151 2345678";
-      case "+254": return "7XX XXX XXX";
-      case "+256": return "7XX XXX XXX";
-      case "+255": return "7XX XXX XXX";
       default: return "123 456 789";
     }
   };
@@ -351,39 +354,46 @@ export function RegisterPage() {
   }, [registrationSessionId, resendAttempts, resendRemainingSeconds, step]);
 
   const validateCurrentStep = () => {
+    const newErrors: typeof fieldErrors = {};
+
     if (step === "identity") {
-      if (!form.firstName.trim() || !form.lastName.trim()) {
-        setError("First name and last name are required.");
-        return false;
+      if (!form.firstName.trim()) newErrors.phoneNumber = "First name is required."; // Use a general or specific state
+      if (!form.lastName.trim()) newErrors.phoneNumber = "Last name is required.";
+
+      const isPhoneValid = validatePhone(`${selectedCountryCode}${phoneNoPrefix}`, selectedIsoCode);
+      if (!isPhoneValid) {
+        newErrors.phoneNumber = "Please enter a valid phone number for the selected country.";
       }
-      if (!isValidPhone(phoneNoPrefix)) {
-        setError("Enter a valid phone number (7-15 digits).");
-        return false;
+
+      if (!validateEmail(form.email)) {
+        newErrors.email = "Please enter a valid email address.";
       }
-      if (!form.email.trim()) {
-        setError("Email is required.");
-        return false;
-      }
+
+      setFieldErrors(newErrors);
+      if (Object.keys(newErrors).length > 0) return false;
       return true;
     }
 
     if (step === "contact") {
       if (!form.district.trim() || !form.sector.trim() || !form.cell.trim() || !form.village.trim()) {
-        setError("Fill all address fields before continuing.");
+        setError("Please complete all location fields.");
         return false;
       }
       return true;
     }
 
     if (step === "security") {
-      if (form.password.length < 6) {
-        setError("Password must be at least 6 characters.");
-        return false;
+      const passwordValidation = validatePassword(form.password);
+      if (!passwordValidation.isValid) {
+        newErrors.password = passwordValidation.message;
       }
+
       if (form.password !== confirmPassword) {
-        setError("Password and confirm password must match.");
-        return false;
+        newErrors.confirmPassword = "Passwords do not match.";
       }
+
+      setFieldErrors(newErrors);
+      if (Object.keys(newErrors).length > 0) return false;
       return true;
     }
 
@@ -533,28 +543,44 @@ export function RegisterPage() {
                         <CountrySelector 
                           countries={countries}
                           selectedCode={selectedCountryCode}
-                          onSelect={setSelectedCountryCode}
+                          onSelect={(prefix, iso) => {
+                            setSelectedCountryCode(prefix);
+                            setSelectedIsoCode(iso);
+                            setPhoneNoPrefix("");
+                            setFieldErrors(prev => ({ ...prev, phoneNumber: undefined }));
+                          }}
                           loading={loadingCountries}
                         />
                         <input
-                          className="phone-number-input"
+                          className={`phone-number-input ${fieldErrors.phoneNumber ? 'error-input' : ''}`}
                           value={phoneNoPrefix}
-                          onChange={(e) => setPhoneNoPrefix(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            setPhoneNoPrefix(val);
+                            setFieldErrors(prev => ({ ...prev, phoneNumber: undefined }));
+                          }}
                           placeholder={getPlaceholder(selectedCountryCode)}
+                          maxLength={getMaxLengthForCountry(selectedIsoCode)}
                           type="tel"
                           required
                         />
                       </div>
+                      {fieldErrors.phoneNumber && <span className="input-error-message">{fieldErrors.phoneNumber}</span>}
                     </label>
 
                     <label>
                       Email
                       <input
+                        className={fieldErrors.email ? 'error-input' : ''}
                         value={form.email}
-                        onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+                        onChange={(e) => {
+                          setForm((prev) => ({ ...prev, email: e.target.value }));
+                          setFieldErrors(prev => ({ ...prev, email: undefined }));
+                        }}
                         type="email"
                         required
                       />
+                      {fieldErrors.email && <span className="input-error-message">{fieldErrors.email}</span>}
                     </label>
                   </div>
                 </>
@@ -670,10 +696,13 @@ export function RegisterPage() {
                     Password
                     <div className="password-field">
                       <input
+                        className={fieldErrors.password ? 'error-input' : ''}
                         value={form.password}
-                        onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                        onChange={(e) => {
+                          setForm((prev) => ({ ...prev, password: e.target.value }));
+                          setFieldErrors(prev => ({ ...prev, password: undefined }));
+                        }}
                         type={showPassword ? "text" : "password"}
-                        minLength={6}
                         required
                       />
                       <button
@@ -686,17 +715,22 @@ export function RegisterPage() {
                         <EyeIcon closed={showPassword} />
                       </button>
                     </div>
+                    {fieldErrors.password && <span className="input-error-message">{fieldErrors.password}</span>}
                   </label>
 
                   <label>
                     Confirm password
                     <input
+                      className={fieldErrors.confirmPassword ? 'error-input' : ''}
                       value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setFieldErrors(prev => ({ ...prev, confirmPassword: undefined }));
+                      }}
                       type={showPassword ? "text" : "password"}
-                      minLength={6}
                       required
                     />
+                    {fieldErrors.confirmPassword && <span className="input-error-message">{fieldErrors.confirmPassword}</span>}
                   </label>
                 </>
               )}

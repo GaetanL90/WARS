@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "../auth/AuthContext";
 import { useCountries } from "../hooks/useCountries";
 import { CountrySelector } from "../components/CountrySelector";
+import { validatePhone, getMaxLengthForCountry } from "../utils/validation";
 
 const API_BASE_URL = "/api-admin";
 
@@ -16,6 +17,8 @@ export function ProfilePage() {
   
   const { countries, loading: loadingCountries } = useCountries();
   const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
+  const [selectedIsoCode, setSelectedIsoCode] = useState("RW");
+  const [phoneError, setPhoneError] = useState("");
   
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -26,14 +29,10 @@ export function ProfilePage() {
 
   const getPlaceholder = (code: string) => {
     switch (code) {
-      case "+250": return "7XX XXX XXX";
-      case "+1": return "(555) 000 0000";
+      case "+250": return "78X XXX XXX";
+      case "+1": return "555 000 0000";
       case "+44": return "7700 900000";
       case "+33": return "06 12 34 56 78";
-      case "+49": return "0151 2345678";
-      case "+254": return "7XX XXX XXX";
-      case "+256": return "7XX XXX XXX";
-      case "+255": return "7XX XXX XXX";
       default: return "123 456 789";
     }
   };
@@ -194,6 +193,16 @@ export function ProfilePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSuccessMsg("");
+    setPhoneError("");
+
+    const isPhoneValid = validatePhone(`${selectedCountryCode}${phoneNoPrefix}`, selectedIsoCode);
+    if (!isPhoneValid) {
+      setPhoneError("Please enter a valid phone number for the selected country.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
@@ -265,21 +274,31 @@ export function ProfilePage() {
               <div className="form-group">
                 <label>Phone Number</label>
                 <div className="phone-input-container">
-                  <CountrySelector 
-                    countries={countries}
-                    selectedCode={selectedCountryCode}
-                    onSelect={setSelectedCountryCode}
-                    loading={loadingCountries}
-                  />
-                  <input
-                    type="tel"
-                    className="input-field phone-number-input"
-                    value={phoneNoPrefix}
-                    onChange={(e) => setPhoneNoPrefix(e.target.value)}
-                    placeholder={getPlaceholder(selectedCountryCode)}
-                    required
-                  />
-                </div>
+                    <CountrySelector 
+                      countries={countries}
+                      selectedCode={selectedCountryCode}
+                      onSelect={(prefix, iso) => {
+                        setSelectedCountryCode(prefix);
+                        setSelectedIsoCode(iso);
+                        setPhoneNoPrefix("");
+                        setPhoneError("");
+                      }}
+                      loading={loadingCountries}
+                    />
+                    <input
+                      className={`phone-number-input ${phoneError ? 'error-input' : ''}`}
+                      value={phoneNoPrefix}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setPhoneNoPrefix(val);
+                        setPhoneError("");
+                      }}
+                      placeholder={getPlaceholder(selectedCountryCode)}
+                      maxLength={getMaxLengthForCountry(selectedIsoCode)}
+                      type="tel"
+                    />
+                  </div>
+                  {phoneError && <span className="input-error-message">{phoneError}</span>}
               </div>
             </div>
 

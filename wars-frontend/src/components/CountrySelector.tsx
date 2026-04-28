@@ -1,114 +1,95 @@
 import { useState, useRef, useEffect } from "react";
 
-interface CountryData {
-  code: string;
-  cca2: string;
+interface Country {
   name: string;
+  flag: string;
+  code: string; // e.g. +250
+  id: string;   // e.g. RW
 }
 
 interface CountrySelectorProps {
-  countries: CountryData[];
+  countries: Country[];
   selectedCode: string;
-  onSelect: (code: string) => void;
+  onSelect: (prefix: string, isoCode: string) => void;
   loading?: boolean;
 }
 
 export function CountrySelector({ countries, selectedCode, onSelect, loading }: CountrySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [search, setSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedCountry = countries.find(c => c.code === selectedCode) || countries.find(c => c.cca2 === "RW");
-
-  const filteredCountries = countries.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.code.includes(searchTerm) ||
-    c.cca2.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Handle selection with immediate closure
-  const handleSelect = (code: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onSelect(code);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
+  const filteredCountries = countries.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase()) || 
+    c.code.includes(search)
+  );
 
-  if (loading && countries.length === 0) {
-    return (
-      <div className="country-selector">
-        <div className="country-selector-trigger loading-skeleton" style={{ width: '100px' }}></div>
-      </div>
-    );
-  }
+  const selectedCountry = countries.find(c => c.code === selectedCode) || countries[0];
+
+  const handleSelect = (c: Country) => {
+    onSelect(c.code, c.id);
+    setIsOpen(false);
+    setSearch("");
+  };
 
   return (
     <div className="country-selector" ref={dropdownRef}>
-      <button 
-        type="button" 
-        className="country-selector-trigger" 
-        onClick={() => setIsOpen(!isOpen)}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-      >
+      <div className="country-selector-trigger" onClick={() => setIsOpen(!isOpen)}>
         {selectedCountry && (
-          <img 
-            src={`https://flagcdn.com/w40/${selectedCountry.cca2.toLowerCase()}.png`} 
-            alt={selectedCountry.cca2} 
-            className="country-flag-img"
-          />
+          <>
+            <img src={selectedCountry.flag} alt={selectedCountry.name} className="country-flag-small" />
+            <span className="country-code-text">{selectedCountry.code}</span>
+          </>
         )}
-        <span className="selected-code-text">{selectedCode}</span>
-        <svg className={`chevron-icon ${isOpen ? 'open' : ''}`} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="6 9 12 15 18 9"></polyline>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 'auto', opacity: 0.5 }}>
+          <path d="M6 9l6 6 6-6" />
         </svg>
-      </button>
+      </div>
 
       {isOpen && (
-        <div className="country-dropdown">
-          <div className="country-search-wrapper" onClick={(e) => e.stopPropagation()}>
+        <div className="country-dropdown card shadow-lg">
+          <div className="country-search-box">
             <input 
               type="text" 
               className="country-search-input" 
               placeholder="Search country..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               autoFocus
             />
           </div>
-          <ul className="country-list" role="listbox">
-            {filteredCountries.map((c) => (
-              <li 
-                key={`${c.cca2}-${c.code}`} 
-                role="option"
-                aria-selected={selectedCode === c.code}
-                className={`country-item ${selectedCode === c.code ? 'active' : ''}`}
-                onMouseDown={(e) => handleSelect(c.code, e)}
-              >
-                <img 
-                  src={`https://flagcdn.com/w40/${c.cca2.toLowerCase()}.png`} 
-                  alt={c.cca2} 
-                  className="country-flag-img"
-                />
-                <span className="country-name">{c.name}</span>
-                <span className="country-code-val">{c.code}</span>
-              </li>
-            ))}
-            {filteredCountries.length === 0 && (
-              <li className="country-item no-results">No countries found</li>
+          <div className="country-list scrollbar-hide">
+            {loading ? (
+              <div className="p-12 text-center text-muted">Loading...</div>
+            ) : filteredCountries.length > 0 ? (
+              filteredCountries.map((c) => (
+                <div 
+                  key={c.id} 
+                  className={`country-item ${c.code === selectedCode ? 'selected' : ''}`}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    handleSelect(c);
+                  }}
+                >
+                  <img src={c.flag} alt={c.name} className="country-flag-small" />
+                  <span className="country-name-list">{c.name}</span>
+                  <span className="country-code-list">{c.code}</span>
+                </div>
+              ))
+            ) : (
+              <div className="p-12 text-center text-muted">No results</div>
             )}
-          </ul>
+          </div>
         </div>
       )}
     </div>

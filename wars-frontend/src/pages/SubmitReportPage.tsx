@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { CountrySelector } from "../components/CountrySelector";
 import { useCountries } from "../hooks/useCountries";
+import { validatePhone, getMaxLengthForCountry } from "../utils/validation";
 
 const API_BASE_URL = "/api-admin";
 
@@ -33,6 +34,8 @@ export function SubmitReportPage() {
   const [issueType, setIssueType] = useState<IssueType | "">("");
   const [phoneNoPrefix, setPhoneNoPrefix] = useState("780000000");
   const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
+  const [selectedIsoCode, setSelectedIsoCode] = useState("RW");
+  const [phoneError, setPhoneError] = useState("");
   
   const { countries, loading: loadingCountries } = useCountries();
   
@@ -43,14 +46,10 @@ export function SubmitReportPage() {
 
   const getPlaceholder = (code: string) => {
     switch (code) {
-      case "+250": return "7XX XXX XXX";
-      case "+1": return "(555) 000 0000";
+      case "+250": return "78X XXX XXX";
+      case "+1": return "555 000 0000";
       case "+44": return "7700 900000";
       case "+33": return "06 12 34 56 78";
-      case "+49": return "0151 2345678";
-      case "+254": return "7XX XXX XXX";
-      case "+256": return "7XX XXX XXX";
-      case "+255": return "7XX XXX XXX";
       default: return "123 456 789";
     }
   };
@@ -193,9 +192,16 @@ export function SubmitReportPage() {
     setImageError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError("");
+    setPhoneError("");
+
+    const isPhoneValid = validatePhone(`${selectedCountryCode}${phoneNoPrefix}`, selectedIsoCode);
+    if (!isPhoneValid) {
+      setPhoneError("Please enter a valid phone number for the selected country.");
+      return;
+    }
 
     if (!issueType) {
       setSubmitError("Please select an issue type.");
@@ -348,7 +354,7 @@ export function SubmitReportPage() {
                 <div className={`input-wrapper ${loadingCells ? 'loading-skeleton' : ''}`}>
                   <select 
                     className="input-field" 
-                    value={cellId}
+                    value={cellId} 
                     onChange={handleCellChange} 
                     disabled={!sectorId || loadingCells || !!locationError}
                     required
@@ -375,7 +381,7 @@ export function SubmitReportPage() {
                     className="input-field" 
                     value={villageId} 
                     onChange={handleVillageChange} 
-                    disabled={!sectorId || loadingVillages || !!locationError}
+                    disabled={!cellId || loadingVillages || !!locationError}
                     required
                   >
                     <option value="" disabled>{loadingVillages ? "Fetching villages..." : "Select Village"}</option>
@@ -389,18 +395,29 @@ export function SubmitReportPage() {
                   <CountrySelector 
                     countries={countries}
                     selectedCode={selectedCountryCode}
-                    onSelect={setSelectedCountryCode}
+                    onSelect={(prefix, iso) => {
+                      setSelectedCountryCode(prefix);
+                      setSelectedIsoCode(iso);
+                      setPhoneNoPrefix("");
+                      setPhoneError("");
+                    }}
                     loading={loadingCountries}
                   />
                   <input
-                    type="tel"
-                    className="input-field phone-number-input"
+                    className={`phone-number-input ${phoneError ? 'error-input' : ''}`}
                     value={phoneNoPrefix}
-                    onChange={(e) => setPhoneNoPrefix(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      setPhoneNoPrefix(val);
+                      setPhoneError("");
+                    }}
                     placeholder={getPlaceholder(selectedCountryCode)}
+                    maxLength={getMaxLengthForCountry(selectedIsoCode)}
+                    type="tel"
                     required
                   />
                 </div>
+                {phoneError && <span className="input-error-message">{phoneError}</span>}
               </div>
             </div>
 

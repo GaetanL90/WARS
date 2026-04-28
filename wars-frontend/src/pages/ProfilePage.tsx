@@ -1,42 +1,21 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "../auth/AuthContext";
+import { useCountries } from "../hooks/useCountries";
+import { CountrySelector } from "../components/CountrySelector";
 
-const LOCATION_TREE = {
-  Gasabo: {
-    Remera: {
-      Nyarutarama: ["Rukiri I", "Rukiri II", "Amahoro"],
-      Nyabisindu: ["Gisimenti", "Inyarutarama", "Akabuga"]
-    },
-    Kimironko: {
-      Bibare: ["Kibagabaga", "Rugando", "Ubumwe"],
-      Nyagatovu: ["Koraneza", "Akamuhoza", "Intwari"]
-    }
-  },
-  Kicukiro: {
-    Kagarama: {
-      Kanserege: ["Marembo", "Amahoro", "Ubumwe"],
-      Rukatsa: ["Gikondo", "Taba", "Gatenga"]
-    },
-    Niboye: {
-      Nyakabanda: ["Nyenyeri", "Mubuga", "Icyerekezo"],
-      Niboye: ["Akasusa", "Kabeza", "Kigina"]
-    }
-  },
-  Nyarugenge: {
-    Nyamirambo: {
-      Mumena: ["Kivugiza", "Sovu", "Imena"],
-      Rugarama: ["Kabagari", "Mpazi", "Cyivugiza"]
-    },
-    Kigali: {
-      Rwesero: ["Biryogo", "Kimisagara", "Rugenge"],
-      Mwendo: ["Kanyinya", "Nyabugogo", "Rwampara"]
-    }
-  }
-} as const;
+const API_BASE_URL = "/api-admin";
+
+interface AdminEntity {
+  id: number;
+  name: string;
+}
 
 export function ProfilePage() {
   const { auth } = useAuth();
   const user = auth?.user;
+  
+  const { countries, loading: loadingCountries } = useCountries();
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
   
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +23,151 @@ export function ProfilePage() {
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const getPlaceholder = (code: string) => {
+    switch (code) {
+      case "+250": return "7XX XXX XXX";
+      case "+1": return "(555) 000 0000";
+      case "+44": return "7700 900000";
+      case "+33": return "06 12 34 56 78";
+      case "+49": return "0151 2345678";
+      case "+254": return "7XX XXX XXX";
+      case "+256": return "7XX XXX XXX";
+      case "+255": return "7XX XXX XXX";
+      default: return "123 456 789";
+    }
+  };
+
+  const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
+  const [phoneNoPrefix, setPhoneNoPrefix] = useState("780000000");
+  const [email, setEmail] = useState(user?.email || "");
+
+  // Administrative Data States
+  const [provinces, setProvinces] = useState<AdminEntity[]>([]);
+  const [districts, setDistricts] = useState<AdminEntity[]>([]);
+  const [sectors, setSectors] = useState<AdminEntity[]>([]);
+  const [cells, setCells] = useState<AdminEntity[]>([]);
+  const [villages, setVillages] = useState<AdminEntity[]>([]);
+
+  // Selection state IDs
+  const [provinceId, setProvinceId] = useState<number | "">("");
+  const [districtId, setDistrictId] = useState<number | "">("");
+  const [sectorId, setSectorId] = useState<number | "">("");
+  const [cellId, setCellId] = useState<number | "">("");
+  const [villageId, setVillageId] = useState<number | "">("");
+
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
+  const fetchProvinces = useCallback(async () => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/provinces/?page_size=100`);
+      const data = await response.json();
+      setProvinces(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch provinces", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchDistricts = useCallback(async (pId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/districts/?province=${pId}&page_size=100`);
+      const data = await response.json();
+      setDistricts(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch districts", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchSectors = useCallback(async (dId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/sectors/?district=${dId}&page_size=100`);
+      const data = await response.json();
+      setSectors(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch sectors", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchCells = useCallback(async (sId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/cells/?sector=${sId}&page_size=100`);
+      const data = await response.json();
+      setCells(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch cells", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchVillages = useCallback(async (cId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/villages/?cell=${cId}&page_size=100`);
+      const data = await response.json();
+      setVillages(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch villages", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProvinces();
+  }, [fetchProvinces]);
+
+  const handleProvinceChange = (pId: number) => {
+    setProvinceId(pId);
+    setDistrictId("");
+    setSectorId("");
+    setCellId("");
+    setVillageId("");
+    setDistricts([]);
+    setSectors([]);
+    setCells([]);
+    setVillages([]);
+    if (pId) fetchDistricts(pId);
+  };
+
+  const handleDistrictChange = (dId: number) => {
+    setDistrictId(dId);
+    setSectorId("");
+    setCellId("");
+    setVillageId("");
+    setSectors([]);
+    setCells([]);
+    setVillages([]);
+    if (dId) fetchSectors(dId);
+  };
+
+  const handleSectorChange = (sId: number) => {
+    setSectorId(sId);
+    setCellId("");
+    setVillageId("");
+    setCells([]);
+    setVillages([]);
+    if (sId) fetchCells(sId);
+  };
+
+  const handleCellChange = (cId: number) => {
+    setCellId(cId);
+    setVillageId("");
+    setVillages([]);
+    if (cId) fetchVillages(cId);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUploadError("");
@@ -67,33 +191,6 @@ export function ProfilePage() {
     setProfilePicture(null);
     setUploadError("");
   };
-
-  const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
-  const [middleName, setMiddleName] = useState("");
-  const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
-  const [phone, setPhone] = useState("+250780000000");
-  const [email, setEmail] = useState(user?.email || "");
-  const [district, setDistrict] = useState("");
-  const [sector, setSector] = useState("");
-  const [cell, setCell] = useState("");
-  const [village, setVillage] = useState("");
-
-  const districts = Object.keys(LOCATION_TREE);
-  const sectors = useMemo(() => district ? Object.keys(LOCATION_TREE[district as keyof typeof LOCATION_TREE] || {}) : [], [district]);
-  const cells = useMemo(() => {
-    if (!district || !sector) return [];
-    const distObj = LOCATION_TREE[district as keyof typeof LOCATION_TREE] as any;
-    return Object.keys(distObj?.[sector] || {});
-  }, [district, sector]);
-  const villages = useMemo(() => {
-    if (!district || !sector || !cell) return [];
-    const distObj = LOCATION_TREE[district as keyof typeof LOCATION_TREE] as any;
-    return distObj?.[sector]?.[cell] || [];
-  }, [district, sector, cell]);
-
-  const handleDistrictChange = (val: string) => { setDistrict(val); setSector(""); setCell(""); setVillage(""); };
-  const handleSectorChange = (val: string) => { setSector(val); setCell(""); setVillage(""); };
-  const handleCellChange = (val: string) => { setCell(val); setVillage(""); };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,7 +264,22 @@ export function ProfilePage() {
               </div>
               <div className="form-group">
                 <label>Phone Number</label>
-                <input type="text" className="input-field" value={phone} onChange={e => setPhone(e.target.value)} required />
+                <div className="phone-input-container">
+                  <CountrySelector 
+                    countries={countries}
+                    selectedCode={selectedCountryCode}
+                    onSelect={setSelectedCountryCode}
+                    loading={loadingCountries}
+                  />
+                  <input
+                    type="tel"
+                    className="input-field phone-number-input"
+                    value={phoneNoPrefix}
+                    onChange={(e) => setPhoneNoPrefix(e.target.value)}
+                    placeholder={getPlaceholder(selectedCountryCode)}
+                    required
+                  />
+                </div>
               </div>
             </div>
 
@@ -180,35 +292,84 @@ export function ProfilePage() {
             
             <div className="input-grid two">
               <div className="form-group">
-                <label>District</label>
-                <select className="input-field" value={district} onChange={e => handleDistrictChange(e.target.value)} required>
-                  <option value="" disabled>Select District</option>
-                  {districts.map((d: string) => <option key={d} value={d}>{d}</option>)}
-                </select>
+                <label>Province</label>
+                <div className={`input-wrapper ${loadingLocations && provinces.length === 0 ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={provinceId} 
+                    onChange={e => handleProvinceChange(Number(e.target.value))} 
+                    required
+                  >
+                    <option value="" disabled>Select Province</option>
+                    {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="form-group">
-                <label>Sector</label>
-                <select className="input-field" value={sector} onChange={e => handleSectorChange(e.target.value)} disabled={!district} required>
-                  <option value="" disabled>Select Sector</option>
-                  {sectors.map((s: string) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <label>District</label>
+                <div className={`input-wrapper ${loadingLocations && provinceId && districts.length === 0 ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={districtId} 
+                    onChange={e => handleDistrictChange(Number(e.target.value))} 
+                    disabled={!provinceId} 
+                    required
+                  >
+                    <option value="" disabled>Select District</option>
+                    {districts.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
             <div className="input-grid two">
               <div className="form-group">
-                <label>Cell</label>
-                <select className="input-field" value={cell} onChange={e => handleCellChange(e.target.value)} disabled={!sector} required>
-                  <option value="" disabled>Select Cell</option>
-                  {cells.map((c: string) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <label>Sector</label>
+                <div className={`input-wrapper ${loadingLocations && districtId && sectors.length === 0 ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={sectorId} 
+                    onChange={e => handleSectorChange(Number(e.target.value))} 
+                    disabled={!districtId} 
+                    required
+                  >
+                    <option value="" disabled>Select Sector</option>
+                    {sectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="form-group">
+                <label>Cell</label>
+                <div className={`input-wrapper ${loadingLocations && sectorId && cells.length === 0 ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={cellId} 
+                    onChange={e => handleCellChange(Number(e.target.value))} 
+                    disabled={!sectorId} 
+                    required
+                  >
+                    <option value="" disabled>Select Cell</option>
+                    {cells.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="input-grid two">
+              <div className="form-group">
                 <label>Village</label>
-                <select className="input-field" value={village} onChange={e => setVillage(e.target.value)} disabled={!cell} required>
-                  <option value="" disabled>Select Village</option>
-                  {villages.map((v: string) => <option key={v} value={v}>{v}</option>)}
-                </select>
+                <div className={`input-wrapper ${loadingLocations && cellId && villages.length === 0 ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={villageId} 
+                    onChange={e => setVillageId(Number(e.target.value))} 
+                    disabled={!cellId} 
+                    required
+                  >
+                    <option value="" disabled>Select Village</option>
+                    {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
             

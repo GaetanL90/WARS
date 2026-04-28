@@ -1,44 +1,15 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState, useCallback } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { resendRegistrationOtp, startRegistration, verifyRegistrationOtp } from "../api/authApi";
 import { useAuth } from "../auth/AuthContext";
 import type { RegisterPayload } from "../auth/types";
+import { CountrySelector } from "../components/CountrySelector";
+import { useCountries } from "../hooks/useCountries";
 
-const LOCATION_TREE = {
-  Gasabo: {
-    Remera: {
-      Nyarutarama: ["Rukiri I", "Rukiri II", "Amahoro"],
-      Nyabisindu: ["Gisimenti", "Inyarutarama", "Akabuga"]
-    },
-    Kimironko: {
-      Bibare: ["Kibagabaga", "Rugando", "Ubumwe"],
-      Nyagatovu: ["Koraneza", "Akamuhoza", "Intwari"]
-    }
-  },
-  Kicukiro: {
-    Kagarama: {
-      Kanserege: ["Marembo", "Amahoro", "Ubumwe"],
-      Rukatsa: ["Gikondo", "Taba", "Gatenga"]
-    },
-    Niboye: {
-      Nyakabanda: ["Nyenyeri", "Mubuga", "Icyerekezo"],
-      Niboye: ["Akasusa", "Kabeza", "Kigina"]
-    }
-  },
-  Nyarugenge: {
-    Nyamirambo: {
-      Mumena: ["Kivugiza", "Sovu", "Imena"],
-      Rugarama: ["Kabagari", "Mpazi", "Cyivugiza"]
-    },
-    Kigali: {
-      Rwesero: ["Biryogo", "Kimisagara", "Rugenge"],
-      Mwendo: ["Kanyinya", "Nyabugogo", "Rwampara"]
-    }
-  }
-} as const;
+const API_BASE_URL = "/api-admin";
 
 function isValidPhone(phone: string): boolean {
-  return /^\+?[0-9]{10,15}$/.test(phone);
+  return /^[0-9\s()-]{7,15}$/.test(phone.replace(/\D/g, ''));
 }
 
 const RESEND_COOLDOWN_SECONDS = [30, 60, 300];
@@ -49,6 +20,11 @@ function formatCountdown(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+interface AdminEntity {
+  id: number;
+  name: string;
 }
 
 function EyeIcon({ closed }: { closed: boolean }) {
@@ -96,12 +72,34 @@ export function RegisterPage() {
   const [resendAttempts, setResendAttempts] = useState(0);
   const [resendRemainingSeconds, setResendRemainingSeconds] = useState(0);
 
-  const [form, setForm] = useState<RegisterPayload>({
+  // Administrative Data States
+  const [provinces, setProvinces] = useState<AdminEntity[]>([]);
+  const [districts, setDistricts] = useState<AdminEntity[]>([]);
+  const [sectors, setSectors] = useState<AdminEntity[]>([]);
+  const [cells, setCells] = useState<AdminEntity[]>([]);
+  const [villages, setVillages] = useState<AdminEntity[]>([]);
+
+  // Selection state IDs
+  const [provinceId, setProvinceId] = useState<number | "">("");
+  const [districtId, setDistrictId] = useState<number | "">("");
+  const [sectorId, setSectorId] = useState<number | "">("");
+  const [cellId, setCellId] = useState<number | "">("");
+  const [villageId, setVillageId] = useState<number | "">("");
+
+  const [loadingLocations, setLoadingLocations] = useState(false);
+
+  // Country Codes State
+  const { countries, loading: loadingCountries } = useCountries();
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
+  const [phoneNoPrefix, setPhoneNoPrefix] = useState("");
+
+  const [form, setForm] = useState<RegisterPayload & { province?: string }>({
     firstName: "",
     middleName: "",
     lastName: "",
     phoneNumber: "",
     email: "",
+    province: "",
     district: "",
     sector: "",
     cell: "",
@@ -110,29 +108,146 @@ export function RegisterPage() {
     role: "citizen"
   });
 
-  const fullNamePreview = useMemo(
-    () => [form.firstName, form.middleName, form.lastName].filter(Boolean).join(" "),
-    [form.firstName, form.middleName, form.lastName]
-  );
-  const districts = useMemo(() => Object.keys(LOCATION_TREE), []);
-  const sectors = useMemo(() => {
-    if (!form.district) return [];
-    return Object.keys(LOCATION_TREE[form.district as keyof typeof LOCATION_TREE] ?? {});
-  }, [form.district]);
-  const cells = useMemo(() => {
-    if (!form.district || !form.sector) return [];
-    return Object.keys(
-      LOCATION_TREE[form.district as keyof typeof LOCATION_TREE]?.[form.sector as keyof (typeof LOCATION_TREE)[keyof typeof LOCATION_TREE]] ?? {}
-    );
-  }, [form.district, form.sector]);
-  const villages = useMemo(() => {
-    if (!form.district || !form.sector || !form.cell) return [];
-    return (
-      LOCATION_TREE[form.district as keyof typeof LOCATION_TREE]?.[form.sector as keyof (typeof LOCATION_TREE)[keyof typeof LOCATION_TREE]]?.[
-        form.cell as keyof (typeof LOCATION_TREE)[keyof typeof LOCATION_TREE][keyof (typeof LOCATION_TREE)[keyof typeof LOCATION_TREE]]
-      ] ?? []
-    );
-  }, [form.district, form.sector, form.cell]);
+  const getPlaceholder = (code: string) => {
+    switch (code) {
+      case "+250": return "7XXXXXXXX";
+      case "+1": return "(555) 000-0000";
+      case "+44": return "7700 900000";
+      case "+33": return "06 12 34 56 78";
+      case "+49": return "0151 2345678";
+      case "+254": return "7XX XXX XXX";
+      case "+256": return "7XX XXX XXX";
+      case "+255": return "7XX XXX XXX";
+      default: return "123 456 789";
+    }
+  };
+
+  // Fetch logic
+  const fetchProvinces = useCallback(async () => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/provinces/?page_size=100`);
+      const data = await response.json();
+      setProvinces(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch provinces", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchDistricts = useCallback(async (pId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/districts/?province=${pId}&page_size=100`);
+      const data = await response.json();
+      setDistricts(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch districts", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchSectors = useCallback(async (dId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/sectors/?district=${dId}&page_size=100`);
+      const data = await response.json();
+      setSectors(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch sectors", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchCells = useCallback(async (sId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/cells/?sector=${sId}&page_size=100`);
+      const data = await response.json();
+      setCells(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch cells", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  const fetchVillages = useCallback(async (cId: number) => {
+    setLoadingLocations(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/villages/?cell=${cId}&page_size=100`);
+      const data = await response.json();
+      setVillages(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch villages", error);
+    } finally {
+      setLoadingLocations(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProvinces();
+  }, [fetchProvinces]);
+
+  const handleProvinceChange = (pId: number) => {
+    const pName = provinces.find(p => p.id === pId)?.name || "";
+    setProvinceId(pId);
+    setDistrictId("");
+    setSectorId("");
+    setCellId("");
+    setVillageId("");
+    setDistricts([]);
+    setSectors([]);
+    setCells([]);
+    setVillages([]);
+    setForm(prev => ({ ...prev, province: pName, district: "", sector: "", cell: "", village: "" }));
+    if (pId) fetchDistricts(pId);
+  };
+
+  const handleDistrictChange = (dId: number) => {
+    const dName = districts.find(d => d.id === dId)?.name || "";
+    setDistrictId(dId);
+    setSectorId("");
+    setCellId("");
+    setVillageId("");
+    setSectors([]);
+    setCells([]);
+    setVillages([]);
+    setForm(prev => ({ ...prev, district: dName, sector: "", cell: "", village: "" }));
+    if (dId) fetchSectors(dId);
+  };
+
+  const handleSectorChange = (sId: number) => {
+    const sName = sectors.find(s => s.id === sId)?.name || "";
+    setSectorId(sId);
+    setCellId("");
+    setVillageId("");
+    setCells([]);
+    setVillages([]);
+    setForm(prev => ({ ...prev, sector: sName, cell: "", village: "" }));
+    if (sId) fetchCells(sId);
+  };
+
+  const handleCellChange = (cId: number) => {
+    const cName = cells.find(c => c.id === cId)?.name || "";
+    setCellId(cId);
+    setVillageId("");
+    setVillages([]);
+    setForm(prev => ({ ...prev, cell: cName, village: "" }));
+    if (cId) fetchVillages(cId);
+  };
+
+  const handleVillageChange = (vId: number) => {
+    const vName = villages.find(v => v.id === vId)?.name || "";
+    setVillageId(vId);
+    setForm(prev => ({ ...prev, village: vName }));
+  };
+
+  const fullNamePreview = [form.firstName, form.middleName, form.lastName].filter(Boolean).join(" ");
+  
   const motivationalCopy: Record<typeof step, string> = {
     identity: "Every complete profile helps us build trusted community reporting.",
     contact: "Nice work - now add your location so teams can reach the issue faster.",
@@ -156,7 +271,14 @@ export function RegisterPage() {
         otpDebugCode: string | null;
       };
 
-      if (parsed.form) setForm(parsed.form);
+      if (parsed.form) {
+        setForm(parsed.form);
+        if (parsed.form.phoneNumber.includes(" ")) {
+          const parts = parsed.form.phoneNumber.split(" ");
+          setSelectedCountryCode(parts[0]);
+          setPhoneNoPrefix(parts[1]);
+        }
+      }
       if (parsed.step) setStep(parsed.step);
       if (parsed.registrationSessionId) setRegistrationSessionId(parsed.registrationSessionId);
       if (parsed.otpDebugCode) setOtpDebugCode(parsed.otpDebugCode);
@@ -169,13 +291,13 @@ export function RegisterPage() {
     localStorage.setItem(
       REGISTRATION_DRAFT_STORAGE_KEY,
       JSON.stringify({
-        form,
+        form: { ...form, phoneNumber: `${selectedCountryCode} ${phoneNoPrefix}`.trim() },
         step,
         registrationSessionId,
         otpDebugCode
       })
     );
-  }, [form, step, registrationSessionId, otpDebugCode]);
+  }, [form, step, registrationSessionId, otpDebugCode, selectedCountryCode, phoneNoPrefix]);
 
   useEffect(() => {
     if (!registrationSessionId) return;
@@ -234,8 +356,8 @@ export function RegisterPage() {
         setError("First name and last name are required.");
         return false;
       }
-      if (!isValidPhone(form.phoneNumber)) {
-        setError("Enter a valid phone number (10-15 digits, optional +).");
+      if (!isValidPhone(phoneNoPrefix)) {
+        setError("Enter a valid phone number (7-15 digits).");
         return false;
       }
       if (!form.email.trim()) {
@@ -289,7 +411,9 @@ export function RegisterPage() {
 
     setSubmitting(true);
     try {
-      const result = await startRegistration(form);
+      const { province, ...payload } = form;
+      payload.phoneNumber = `${selectedCountryCode}${phoneNoPrefix}`;
+      const result = await startRegistration(payload);
       setRegistrationSessionId(result.registrationSessionId);
       setOtpDebugCode(result.otpDebugCode ?? null);
       setResendAttempts(0);
@@ -405,12 +529,22 @@ export function RegisterPage() {
                   <div className="input-grid two">
                     <label>
                       Phone number
-                      <input
-                        value={form.phoneNumber}
-                        onChange={(e) => setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))}
-                        placeholder="+2507XXXXXXXX"
-                        required
-                      />
+                      <div className="phone-input-container">
+                        <CountrySelector 
+                          countries={countries}
+                          selectedCode={selectedCountryCode}
+                          onSelect={setSelectedCountryCode}
+                          loading={loadingCountries}
+                        />
+                        <input
+                          className="phone-number-input"
+                          value={phoneNoPrefix}
+                          onChange={(e) => setPhoneNoPrefix(e.target.value)}
+                          placeholder={getPlaceholder(selectedCountryCode)}
+                          type="tel"
+                          required
+                        />
+                      </div>
                     </label>
 
                     <label>
@@ -430,93 +564,103 @@ export function RegisterPage() {
                 <>
                   <div className="input-grid two">
                     <label>
-                      District
-                      <select
-                        value={form.district}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            district: e.target.value,
-                            sector: "",
-                            cell: "",
-                            village: ""
-                          }))
-                        }
-                        required
-                      >
-                        <option value="">Select district</option>
-                        {districts.map((district) => (
-                          <option key={district} value={district}>
-                            {district}
-                          </option>
-                        ))}
-                      </select>
+                      Province
+                      <div className={`input-wrapper ${loadingLocations && provinces.length === 0 ? 'loading-skeleton' : ''}`}>
+                        <select
+                          value={provinceId}
+                          onChange={(e) => handleProvinceChange(Number(e.target.value))}
+                          disabled={loadingLocations}
+                          required
+                        >
+                          <option value="">{loadingLocations && provinces.length === 0 ? "Fetching..." : "Select province"}</option>
+                          {provinces.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </label>
                     <label>
-                      Sector
-                      <select
-                        value={form.sector}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            sector: e.target.value,
-                            cell: "",
-                            village: ""
-                          }))
-                        }
-                        disabled={!form.district}
-                        required
-                      >
-                        <option value="">Select sector</option>
-                        {sectors.map((sector) => (
-                          <option key={sector} value={sector}>
-                            {sector}
-                          </option>
-                        ))}
-                      </select>
+                      District
+                      <div className={`input-wrapper ${loadingLocations && provinceId && districts.length === 0 ? 'loading-skeleton' : ''}`}>
+                        <select
+                          value={districtId}
+                          onChange={(e) => handleDistrictChange(Number(e.target.value))}
+                          disabled={!provinceId || loadingLocations}
+                          required
+                        >
+                          <option value="">{loadingLocations && provinceId && districts.length === 0 ? "Fetching..." : "Select district"}</option>
+                          {districts.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </label>
                   </div>
 
                   <div className="input-grid two">
                     <label>
-                      Cell
-                      <select
-                        value={form.cell}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            cell: e.target.value,
-                            village: ""
-                          }))
-                        }
-                        disabled={!form.sector}
-                        required
-                      >
-                        <option value="">Select cell</option>
-                        {cells.map((cell) => (
-                          <option key={cell} value={cell}>
-                            {cell}
-                          </option>
-                        ))}
-                      </select>
+                      Sector
+                      <div className={`input-wrapper ${loadingLocations && districtId && sectors.length === 0 ? 'loading-skeleton' : ''}`}>
+                        <select
+                          value={sectorId}
+                          onChange={(e) => handleSectorChange(Number(e.target.value))}
+                          disabled={!districtId || loadingLocations}
+                          required
+                        >
+                          <option value="">{loadingLocations && districtId && sectors.length === 0 ? "Fetching..." : "Select sector"}</option>
+                          {sectors.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </label>
                     <label>
-                      Village
-                      <select
-                        value={form.village}
-                        onChange={(e) => setForm((prev) => ({ ...prev, village: e.target.value }))}
-                        disabled={!form.cell}
-                        required
-                      >
-                        <option value="">Select village</option>
-                        {villages.map((village) => (
-                          <option key={village} value={village}>
-                            {village}
-                          </option>
-                        ))}
-                      </select>
+                      Cell
+                      <div className={`input-wrapper ${loadingLocations && sectorId && cells.length === 0 ? 'loading-skeleton' : ''}`}>
+                        <select
+                          value={cellId}
+                          onChange={(e) => handleCellChange(Number(e.target.value))}
+                          disabled={!sectorId || loadingLocations}
+                          required
+                        >
+                          <option value="">{loadingLocations && sectorId && cells.length === 0 ? "Fetching..." : "Select cell"}</option>
+                          {cells.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </label>
                   </div>
+
+                  <div className="input-grid two">
+                    <label>
+                      Village
+                      <div className={`input-wrapper ${loadingLocations && cellId && villages.length === 0 ? 'loading-skeleton' : ''}`}>
+                        <select
+                          value={villageId}
+                          onChange={(e) => handleVillageChange(Number(e.target.value))}
+                          disabled={!cellId || loadingLocations}
+                          required
+                        >
+                          <option value="">{loadingLocations && cellId && villages.length === 0 ? "Fetching..." : "Select village"}</option>
+                          {villages.map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </label>
+                  </div>
+                  {loadingLocations && <p className="hint">Loading locations...</p>}
                 </>
               )}
 

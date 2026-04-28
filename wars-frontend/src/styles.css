@@ -409,6 +409,65 @@ a {
   border-radius: 12px;
 }
 
+.auth-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  isolation: isolate;
+  z-index: 1000;
+}
+
+.auth-page::before {
+  content: "";
+  position: absolute;
+  inset: -24px;
+  background-image: url("./assets/burst-industrial-pipe-jpg.webp");
+  background-size: cover;
+  background-position: center;
+  filter: blur(8px);
+  transform: scale(1.05);
+  z-index: -2;
+}
+
+.auth-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 28, 53, 0.45) 0%, rgba(10, 32, 59, 0.65) 100%);
+  z-index: -1;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(221, 233, 247, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+  /* Hide scrollbar for IE/Edge */
+  -ms-overflow-style: none;
+}
+
+.auth-card::-webkit-scrollbar {
+  /* Hide scrollbar for Chrome/Safari */
+  display: none;
+}
+
+.auth-card--wide {
+  max-width: 640px;
+}
+
 .profile-card-header {
   display: flex;
   align-items: center;
@@ -552,48 +611,6 @@ a {
   gap: 12px;
 }
 
-.auth-page {
-  min-height: 100vh;
-  position: relative;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.auth-page::before {
-  content: "";
-  position: absolute;
-  inset: -24px;
-  background-image: url("./assets/burst-industrial-pipe-jpg.webp");
-  background-size: cover;
-  background-position: center;
-  filter: blur(5px);
-  transform: scale(1.04);
-  z-index: -2;
-}
-
-.auth-page::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(8, 28, 53, 0.42) 0%, rgba(10, 32, 59, 0.56) 100%);
-  z-index: -1;
-}
-
-.auth-page .auth-card {
-  width: min(420px, 100%);
-  margin: 0;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(221, 233, 247, 0.92);
-  backdrop-filter: blur(6px);
-}
-
-.auth-page .auth-card--wide {
-  width: min(640px, 100%);
-}
 
 .input-grid {
   display: grid;
@@ -1512,6 +1529,47 @@ button {
   margin-bottom: 16px;
 }
 
+/* Pilot Notice Component */
+.pilot-notice-card {
+  display: flex;
+  gap: 16px;
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  align-items: flex-start;
+}
+
+.pilot-notice-icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pilot-notice-content strong {
+  display: block;
+  color: #1e40af;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.pilot-notice-content p {
+  margin: 0;
+  color: #1e3a8a;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* User Card Styles (Existing) */
+.user-card {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 /* Urgency Pills */
 .urgency-pill {
   padding: 4px 10px;
@@ -1984,6 +2042,45 @@ button {
 
 .reports-table tr:hover {
   background: #fcfdfe;
+}
+
+/* Skeleton Loading Animation */
+.loading-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.loading-skeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.3) 30%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.3) 70%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-effect 1.5s infinite;
+}
+
+@keyframes shimmer-effect {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.loading-skeleton select, 
+.loading-skeleton input {
+  opacity: 0.3;
 }
 
 /* Filters & Pagination */
@@ -2561,4 +2658,159 @@ button {
   background: #e2e8f0;
   color: #1d4ed8;
   transform: translateY(-1px);
+}
+
+/* Phone Input with Country Code */
+.phone-input-container {
+  display: flex;
+  gap: 8px;
+}
+
+.country-code-select {
+  width: 100px;
+  flex-shrink: 0;
+  padding: 0 8px;
+  background: #f8fafc;
+  border: 1px solid #e0e9f6;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #10233c;
+  cursor: pointer;
+}
+
+.phone-number-input {
+  flex-grow: 1;
+}
+
+/* Custom Country Selector */
+.country-selector {
+  position: relative;
+  width: 95px;
+  flex-shrink: 0;
+}
+
+.country-selector-trigger {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background: #f8fafc;
+  border: 1px solid #e0e9f6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.country-selector-trigger:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.country-flag-img {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.selected-code-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #10233c;
+}
+
+.chevron-icon {
+  margin-left: auto;
+  transition: transform 0.2s;
+  color: #94a3b8;
+}
+
+.chevron-icon.open {
+  transform: rotate(180deg);
+}
+
+.country-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 280px;
+  max-height: 320px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(221, 233, 247, 0.8);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+}
+
+.country-search-wrapper {
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.country-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.country-search-input:focus {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.1);
+}
+
+.country-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.country-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.country-item:hover {
+  background: #f1f5f9;
+}
+
+.country-item.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.country-name {
+  flex-grow: 1;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.country-code-val {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.country-item.no-results {
+  padding: 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
 }

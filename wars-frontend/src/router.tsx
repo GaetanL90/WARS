@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
@@ -15,6 +15,7 @@ import { MyReportsPage } from "./pages/MyReportsPage";
 import { ReportDetailsPage } from "./pages/ReportDetailsPage";
 import { AssignedReportsPage } from "./pages/AssignedReportsPage";
 import { CaseReportsPage } from "./pages/CaseReportsPage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 
 export function AppRouter() {
   return (
@@ -46,7 +47,7 @@ export function AppRouter() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

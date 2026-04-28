@@ -1,39 +1,10 @@
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { CountrySelector } from "../components/CountrySelector";
+import { useCountries } from "../hooks/useCountries";
 
-const LOCATION_TREE = {
-  Gasabo: {
-    Remera: {
-      Nyarutarama: ["Rukiri I", "Rukiri II", "Amahoro"],
-      Nyabisindu: ["Gisimenti", "Inyarutarama", "Akabuga"]
-    },
-    Kimironko: {
-      Bibare: ["Kibagabaga", "Rugando", "Ubumwe"],
-      Nyagatovu: ["Koraneza", "Akamuhoza", "Intwari"]
-    }
-  },
-  Kicukiro: {
-    Kagarama: {
-      Kanserege: ["Marembo", "Amahoro", "Ubumwe"],
-      Rukatsa: ["Gikondo", "Taba", "Gatenga"]
-    },
-    Niboye: {
-      Nyakabanda: ["Nyenyeri", "Mubuga", "Icyerekezo"],
-      Niboye: ["Akasusa", "Kabeza", "Kigina"]
-    }
-  },
-  Nyarugenge: {
-    Nyamirambo: {
-      Mumena: ["Kivugiza", "Sovu", "Imena"],
-      Rugarama: ["Kabagari", "Mpazi", "Cyivugiza"]
-    },
-    Kigali: {
-      Rwesero: ["Biryogo", "Kimisagara", "Rugenge"],
-      Mwendo: ["Kanyinya", "Nyabugogo", "Rwampara"]
-    }
-  }
-} as const;
+const API_BASE_URL = "/api-admin";
 
 const ISSUE_TYPES = [
   { value: "contamination", label: "Water Contamination" },
@@ -48,19 +19,10 @@ const ISSUE_TYPES = [
 
 type IssueType = typeof ISSUE_TYPES[number]["value"];
 
-const MOCK_REPORTS: Record<number, any> = {
-  1028: {
-    id: 1028,
-    issue_type: "no_water",
-    description: "Total water outage for the last 12 hours. The whole neighborhood is affected.",
-    district: "Gasabo",
-    sector: "Kimironko",
-    cell: "Bibare",
-    village: "Kibagabaga",
-    phone: "+250788123456",
-    location_detail: "Near the main road"
-  }
-};
+interface AdminEntity {
+  id: number;
+  name: string;
+}
 
 export function SubmitReportPage() {
   const { id } = useParams<{ id: string }>();
@@ -69,50 +31,133 @@ export function SubmitReportPage() {
   const user = auth?.user;
 
   const [issueType, setIssueType] = useState<IssueType | "">("");
-  const [phone, setPhone] = useState("+250780000000");
+  const [phoneNoPrefix, setPhoneNoPrefix] = useState("780000000");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+250");
+  
+  const { countries, loading: loadingCountries } = useCountries();
+  
   const [description, setDescription] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
   
   const isEditMode = !!id;
 
-  useEffect(() => {
-    if (isEditMode && id) {
-      const report = MOCK_REPORTS[Number(id)];
-      if (report) {
-        setIssueType(report.issue_type);
-        setPhone(report.phone);
-        setDescription(report.description);
-        setLocationDetail(report.location_detail || "");
-        setDistrict(report.district);
-        setSector(report.sector);
-        setCell(report.cell);
-        setVillage(report.village);
-      }
+  const getPlaceholder = (code: string) => {
+    switch (code) {
+      case "+250": return "7XX XXX XXX";
+      case "+1": return "(555) 000 0000";
+      case "+44": return "7700 900000";
+      case "+33": return "06 12 34 56 78";
+      case "+49": return "0151 2345678";
+      case "+254": return "7XX XXX XXX";
+      case "+256": return "7XX XXX XXX";
+      case "+255": return "7XX XXX XXX";
+      default: return "123 456 789";
     }
-  }, [id, isEditMode]);
+  };
+
+  // Location IDs and Names
+  const [sectorId, setSectorId] = useState<number | "">("");
+  const [cellId, setCellId] = useState<number | "">("");
+  const [villageId, setVillageId] = useState<number | "">("");
   
-  // Location states
-  const [district, setDistrict] = useState("");
-  const [sector, setSector] = useState("");
-  const [cell, setCell] = useState("");
-  const [village, setVillage] = useState("");
+  const [sectorName, setSectorName] = useState("");
+  const [villageName, setVillageName] = useState("");
 
-  const districts = Object.keys(LOCATION_TREE);
-  const sectors = useMemo(() => district ? Object.keys(LOCATION_TREE[district as keyof typeof LOCATION_TREE] || {}) : [], [district]);
-  const cells = useMemo(() => {
-    if (!district || !sector) return [];
-    const distObj = LOCATION_TREE[district as keyof typeof LOCATION_TREE] as any;
-    return Object.keys(distObj?.[sector] || {});
-  }, [district, sector]);
-  const villages = useMemo(() => {
-    if (!district || !sector || !cell) return [];
-    const distObj = LOCATION_TREE[district as keyof typeof LOCATION_TREE] as any;
-    return distObj?.[sector]?.[cell] || [];
-  }, [district, sector, cell]);
+  // Data lists
+  const [sectors, setSectors] = useState<AdminEntity[]>([]);
+  const [cells, setCells] = useState<AdminEntity[]>([]);
+  const [villages, setVillages] = useState<AdminEntity[]>([]);
 
-  const handleDistrictChange = (val: string) => { setDistrict(val); setSector(""); setCell(""); setVillage(""); };
-  const handleSectorChange = (val: string) => { setSector(val); setCell(""); setVillage(""); };
-  const handleCellChange = (val: string) => { setCell(val); setVillage(""); };
+  // Loading states
+  const [loadingSectors, setLoadingSectors] = useState(false);
+  const [loadingCells, setLoadingCells] = useState(false);
+  const [loadingVillages, setLoadingVillages] = useState(false);
+  const [locationError, setLocationError] = useState("");
+
+  // Constants for Pilot (Bugesera, Eastern Province)
+  const DISTRICT_ID = 121;
+
+  const fetchSectors = useCallback(async () => {
+    setLoadingSectors(true);
+    setLocationError("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/sectors/?district=${DISTRICT_ID}&page_size=100`);
+      if (!response.ok) throw new Error(`Status: ${response.status}`);
+      const data = await response.json();
+      setSectors(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch sectors", error);
+      setLocationError("Failed to load sectors. Please check your connection or try again.");
+    } finally {
+      setLoadingSectors(false);
+    }
+  }, []);
+
+  const fetchCells = useCallback(async (sId: number) => {
+    setLoadingCells(true);
+    setLocationError("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/cells/?sector=${sId}&page_size=100`);
+      if (!response.ok) throw new Error(`Status: ${response.status}`);
+      const data = await response.json();
+      setCells(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch cells", error);
+      setLocationError("Failed to load cells.");
+    } finally {
+      setLoadingCells(false);
+    }
+  }, []);
+
+  const fetchVillages = useCallback(async (cId: number) => {
+    setLoadingVillages(true);
+    setLocationError("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/villages/?cell=${cId}&page_size=100`);
+      if (!response.ok) throw new Error(`Status: ${response.status}`);
+      const data = await response.json();
+      setVillages(data.results || []);
+    } catch (error) {
+      console.error("Failed to fetch villages", error);
+      setLocationError("Failed to load villages.");
+    } finally {
+      setLoadingVillages(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSectors();
+  }, [fetchSectors]);
+
+  const handleSectorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const sId = Number(e.target.value);
+    const sName = sectors.find(s => s.id === sId)?.name || "";
+    setSectorId(sId);
+    setSectorName(sName);
+    setCellId("");
+    setVillageId("");
+    setVillageName("");
+    setCells([]);
+    setVillages([]);
+    if (sId) fetchCells(sId);
+  };
+
+  const handleCellChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const cId = Number(e.target.value);
+    setCellId(cId);
+    setVillageId("");
+    setVillageName("");
+    setVillages([]);
+    if (cId) fetchVillages(cId);
+  };
+
+  const handleVillageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const vId = Number(e.target.value);
+    const vName = villages.find(v => v.id === vId)?.name || "";
+    setVillageId(vId);
+    setVillageName(vName);
+  };
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState("");
@@ -157,6 +202,11 @@ export function SubmitReportPage() {
       return;
     }
 
+    if (!sectorId || !villageId) {
+      setSubmitError("Please complete the location selection.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Mock API submission
@@ -168,13 +218,15 @@ export function SubmitReportPage() {
 
   const handleReset = () => {
     setIssueType("");
-    setPhone("+250780000000");
+    setPhoneNoPrefix("780000000");
+    setSelectedCountryCode("+250");
     setDescription("");
     setLocationDetail("");
-    setDistrict("");
-    setSector("");
-    setCell("");
-    setVillage("");
+    setSectorId("");
+    setCellId("");
+    setVillageId("");
+    setSectorName("");
+    setVillageName("");
     setImageFile(null);
     setImagePreview(null);
     setImageError("");
@@ -193,7 +245,7 @@ export function SubmitReportPage() {
             </svg>
           </div>
           <h2>Report Submitted!</h2>
-          <p>Thank you, <strong>{user?.name || user?.email}</strong>. Your report has been received and will be reviewed shortly.</p>
+          <p>Thank you, <strong>{user?.name || user?.email}</strong>. Your report in <strong>{villageName}, {sectorName}</strong> has been received.</p>
           <button className="btn btn-primary" onClick={handleReset} style={{ marginTop: '24px' }}>
             Submit Another Report
           </button>
@@ -259,64 +311,108 @@ export function SubmitReportPage() {
 
           {/* Location & Contact */}
           <div className="report-section">
-            <h3 className="report-section-title">Location & Contact</h3>
-
-            <div className="input-grid two">
-              <div className="form-group">
-                <label>District <span className="required-star">*</span></label>
-                <select className="input-field" value={district} onChange={e => handleDistrictChange(e.target.value)} required>
-                  <option value="" disabled>Select District</option>
-                  {districts.map((d: string) => <option key={d} value={d}>{d}</option>)}
-                </select>
+            <div className="pilot-notice-card">
+              <div className="pilot-notice-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
               </div>
+              <div className="pilot-notice-content">
+                <strong>Bugesera District Pilot</strong>
+                <p>We are currently operating exclusively in Bugesera. Our platform will expand to other districts of Rwanda very soon. Stay tuned!</p>
+              </div>
+            </div>
+
+            <h3 className="report-section-title" style={{ marginTop: '24px' }}>Location in Bugesera</h3>
+            
+            <div className="input-grid two">
               <div className="form-group">
                 <label>Sector <span className="required-star">*</span></label>
-                <select className="input-field" value={sector} onChange={e => handleSectorChange(e.target.value)} disabled={!district} required>
-                  <option value="" disabled>Select Sector</option>
-                  {sectors.map((s: string) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <div className={`input-wrapper ${loadingSectors ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={sectorId} 
+                    onChange={handleSectorChange} 
+                    disabled={loadingSectors || !!locationError}
+                    required
+                  >
+                    <option value="" disabled>{loadingSectors ? "Fetching sectors..." : "Select Sector"}</option>
+                    {sectors.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
               </div>
-            </div>
-
-            <div className="input-grid two">
               <div className="form-group">
                 <label>Cell <span className="required-star">*</span></label>
-                <select className="input-field" value={cell} onChange={e => handleCellChange(e.target.value)} disabled={!sector} required>
-                  <option value="" disabled>Select Cell</option>
-                  {cells.map((c: string) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Village <span className="required-star">*</span></label>
-                <select className="input-field" value={village} onChange={e => setVillage(e.target.value)} disabled={!cell} required>
-                  <option value="" disabled>Select Village</option>
-                  {villages.map((v: string) => <option key={v} value={v}>{v}</option>)}
-                </select>
+                <div className={`input-wrapper ${loadingCells ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={cellId}
+                    onChange={handleCellChange} 
+                    disabled={!sectorId || loadingCells || !!locationError}
+                    required
+                  >
+                    <option value="" disabled>{loadingCells ? "Fetching cells..." : "Select Cell"}</option>
+                    {cells.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
 
+            {locationError && (
+              <div className="error-message mb-16" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{locationError}</span>
+                <button type="button" className="btn btn-sm btn-outline" onClick={() => fetchSectors()}>Retry</button>
+              </div>
+            )}
+
             <div className="input-grid two">
               <div className="form-group">
-                <label>Phone Number <span className="required-star">*</span></label>
-                <input
-                  type="text"
-                  className="input-field"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+250..."
-                  required
-                />
+                <label>Village <span className="required-star">*</span></label>
+                <div className={`input-wrapper ${loadingVillages ? 'loading-skeleton' : ''}`}>
+                  <select 
+                    className="input-field" 
+                    value={villageId} 
+                    onChange={handleVillageChange} 
+                    disabled={!sectorId || loadingVillages || !!locationError}
+                    required
+                  >
+                    <option value="" disabled>{loadingVillages ? "Fetching villages..." : "Select Village"}</option>
+                    {villages.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="form-group">
-                <label>Specific Location Detail</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  value={locationDetail}
-                  onChange={(e) => setLocationDetail(e.target.value)}
-                  placeholder="e.g. Near the school gate, Block B"
-                />
+                <label>Phone Number <span className="required-star">*</span></label>
+                <div className="phone-input-container">
+                  <CountrySelector 
+                    countries={countries}
+                    selectedCode={selectedCountryCode}
+                    onSelect={setSelectedCountryCode}
+                    loading={loadingCountries}
+                  />
+                  <input
+                    type="tel"
+                    className="input-field phone-number-input"
+                    value={phoneNoPrefix}
+                    onChange={(e) => setPhoneNoPrefix(e.target.value)}
+                    placeholder={getPlaceholder(selectedCountryCode)}
+                    required
+                  />
+                </div>
               </div>
+            </div>
+
+            <div className="form-group" style={{ marginTop: '16px' }}>
+              <label>Specific Location Detail</label>
+              <input
+                type="text"
+                className="input-field"
+                value={locationDetail}
+                onChange={(e) => setLocationDetail(e.target.value)}
+                placeholder="e.g. Near the school gate, Block B"
+              />
             </div>
           </div>
 
@@ -343,7 +439,7 @@ export function SubmitReportPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button type="button" className="btn btn-outline" onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button type="button" className="btn btn-outline" onClick={() => fileInputRef.current?.click()} style={{ display: 'center', alignItems: 'center', gap: '8px' }}>
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <circle cx="8.5" cy="8.5" r="1.5"></circle>

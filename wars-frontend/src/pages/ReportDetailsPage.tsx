@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 
 type InternalStatus = "new" | "pending" | "assigned" | "returned" | "escalated" | "resolved";
@@ -12,6 +12,9 @@ interface ReportDetails {
   internal_status: InternalStatus;
   reported_at: string;
   description: string;
+  location: string;
+  location_detail?: string;
+  phone: string;
   image_path?: string;
   urgency?: Urgency;
   is_assigned_to_me?: boolean;
@@ -55,12 +58,10 @@ const MOCK_REPORTS: Record<number, ReportDetails> = {
 export function ReportDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const { auth } = useAuth();
   const [report, setReport] = useState<ReportDetails | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   
   // Status update states
   const [showUpdateModal, setShowUpdateModal] = useState(false);

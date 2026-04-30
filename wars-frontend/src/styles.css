@@ -409,64 +409,7 @@ a {
   border-radius: 12px;
 }
 
-.auth-page {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  overflow: hidden;
-  isolation: isolate;
-  z-index: 1000;
-}
 
-.auth-page::before {
-  content: "";
-  position: absolute;
-  inset: -24px;
-  background-image: url("./assets/burst-industrial-pipe-jpg.webp");
-  background-size: cover;
-  background-position: center;
-  filter: blur(8px);
-  transform: scale(1.05);
-  z-index: -2;
-}
-
-.auth-page::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(8, 28, 53, 0.45) 0%, rgba(10, 32, 59, 0.65) 100%);
-  z-index: -1;
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 40px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  border: 1px solid rgba(221, 233, 247, 0.3);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  
-  /* Hide scrollbar for Firefox */
-  scrollbar-width: none;
-  /* Hide scrollbar for IE/Edge */
-  -ms-overflow-style: none;
-}
-
-.auth-card::-webkit-scrollbar {
-  /* Hide scrollbar for Chrome/Safari */
-  display: none;
-}
-
-.auth-card--wide {
-  max-width: 640px;
-}
 
 .profile-card-header {
   display: flex;
@@ -604,6 +547,66 @@ a {
   border: 1px solid #dbe5f2;
   background: #ffffff;
   box-shadow: 0 8px 30px rgba(10, 35, 66, 0.06);
+}
+
+/* Authentication Layouts */
+.auth-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  isolation: isolate;
+  z-index: 1000;
+}
+
+.auth-page::before {
+  content: "";
+  position: absolute;
+  inset: -24px;
+  background-image: url("./assets/burst-industrial-pipe-jpg.webp");
+  background-size: cover;
+  background-position: center;
+  filter: blur(8px);
+  transform: scale(1.05);
+  z-index: -2;
+}
+
+.auth-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 28, 53, 0.45) 0%, rgba(10, 32, 59, 0.65) 100%);
+  z-index: -1;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(221, 233, 247, 0.3);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  
+  /* Hide scrollbar for Firefox */
+  scrollbar-width: none;
+  /* Hide scrollbar for IE/Edge */
+  -ms-overflow-style: none;
+}
+
+.auth-card::-webkit-scrollbar {
+  /* Hide scrollbar for Chrome/Safari */
+  display: none;
+}
+
+.auth-card--wide {
+  max-width: 560px;
 }
 
 .auth-card form {

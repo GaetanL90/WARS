@@ -3,6 +3,10 @@
     {
       "source": "/api-admin/(.*)",
       "destination": "https://rwanda-administrative-structure-api.onrender.com/api/$1"
+    },
+    {
+      "source": "/((?!api-admin/).*)",
+      "destination": "/index.html"
     }
   ]
 }

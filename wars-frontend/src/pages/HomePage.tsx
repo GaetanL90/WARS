@@ -5,14 +5,11 @@ import bustedPipeImage from "../assets/bursted_pipe.jpg";
 import contaminatedTapImage from "../assets/solving-brown-water-from-tap.jpg";
 
 export function HomePage() {
-  const { auth, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   
   const getDashboardLink = () => {
     if (!isAuthenticated) return "/login";
-    const role = auth?.user?.role;
-    if (role === "citizen") return "/reports/new";
-    if (role === "technician") return "/reports/assigned";
-    return "/portal";
+    return "/dashboard";
   };
   
   const dashboardLink = getDashboardLink();

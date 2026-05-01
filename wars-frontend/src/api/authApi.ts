@@ -29,18 +29,20 @@ interface LoginResponseData {
 }
 
 interface RegisterResponseData {
-  id: number;
+  user_id: number;
   email: string;
   role: AuthUser["role"];
 }
 
 interface MockUserRecord {
-  id: number;
-  name: string;
+  user_id: number;
+  username: string;
+  full_name: string;
   email: string;
   password: string;
   enabled?: boolean;
   phoneNumber?: string;
+  zone_id?: string;
   address?: {
     district: string;
     sector: string;
@@ -64,17 +66,17 @@ interface PendingPasswordReset {
   resetToken?: string;
 }
 
-const mockUsers: MockUserRecord[] = [
-  { id: 1, name: "Admin User", email: "admin@wars.local", password: "123456", enabled: true, role: "admin" },
-  { id: 2, name: "Manager User", email: "manager@wars.local", password: "123456", enabled: true, role: "manager" },
-  { id: 3, name: "Technician User", email: "technician@wars.local", password: "123456", enabled: true, role: "technician" },
-  { id: 4, name: "Citizen User", email: "citizen@wars.local", password: "123456", enabled: true, role: "citizen" }
+export const mockUsers: MockUserRecord[] = [
+  { user_id: 1, username: "admin", full_name: "Admin User", email: "admin@wars.local", password: "123456", enabled: true, role: "admin", zone_id: "zone-a" },
+  { user_id: 2, username: "manager", full_name: "Manager User", email: "manager@wars.local", password: "123456", enabled: true, role: "manager", zone_id: "zone-a" },
+  { user_id: 3, username: "technician", full_name: "Technician User", email: "technician@wars.local", password: "123456", enabled: true, role: "technician", zone_id: "zone-b" },
+  { user_id: 4, username: "citizen", full_name: "Citizen User", email: "citizen@wars.local", password: "123456", enabled: true, role: "citizen", zone_id: "zone-a" }
 ];
 const pendingRegistrations: PendingRegistration[] = [];
 const pendingPasswordResets: PendingPasswordReset[] = [];
 
 function createMockToken(prefix: string, user: MockUserRecord): string {
-  return `${prefix}-${user.role}-${user.id}-${Date.now()}`;
+  return `${prefix}-${user.role}-${user.user_id}-${Date.now()}`;
 }
 
 async function loginMock(payload: LoginPayload): Promise<AuthState> {
@@ -87,10 +89,13 @@ async function loginMock(payload: LoginPayload): Promise<AuthState> {
     accessToken: createMockToken("mock-access", user),
     refreshToken: createMockToken("mock-refresh", user),
     user: {
-      id: user.id,
+      user_id: user.user_id,
       role: user.role,
       email: user.email,
-      name: user.name
+      username: user.username,
+      full_name: user.full_name,
+      phone: user.phoneNumber,
+      zone_id: user.zone_id
     }
   };
 }
@@ -101,14 +106,16 @@ async function registerMock(payload: RegisterPayload): Promise<RegisterResponseD
     throw new Error("Email already exists");
   }
 
-  const nextId = Math.max(...mockUsers.map((item) => item.id)) + 1;
+  const nextId = Math.max(...mockUsers.map((item) => item.user_id)) + 1;
   const fullName = [payload.firstName, payload.middleName, payload.lastName].filter(Boolean).join(" ");
   const created: MockUserRecord = {
-    id: nextId,
-    name: fullName,
+    user_id: nextId,
+    username: payload.username || payload.email.split('@')[0],
+    full_name: fullName,
     email: payload.email,
     password: payload.password,
     phoneNumber: payload.phoneNumber,
+    zone_id: payload.zone_id,
     address: {
       district: payload.district,
       sector: payload.sector,
@@ -121,7 +128,7 @@ async function registerMock(payload: RegisterPayload): Promise<RegisterResponseD
   mockUsers.push(created);
 
   return {
-    id: created.id,
+    user_id: created.user_id,
     email: created.email,
     role: created.role
   };
@@ -366,3 +373,84 @@ export async function resendForgotPasswordOtp(payload: ResendForgotPasswordOtpPa
 
   return requestJson<StartForgotPasswordResponse>("/auth/forgot-password/resend-otp", payload);
 }
+
+// User Management Functions
+export async function searchUsers(query: string): Promise<AuthUser[]> {
+  if (USE_MOCK_AUTH) {
+    const lowerQuery = query.toLowerCase();
+    return mockUsers
+      .filter(u => u.email.toLowerCase().includes(lowerQuery) || (u.phoneNumber && u.phoneNumber.includes(query)) || u.username.toLowerCase().includes(lowerQuery))
+      .map(u => ({ 
+        user_id: u.user_id, 
+        username: u.username,
+        full_name: u.full_name, 
+        email: u.email, 
+        role: u.role,
+        phone: u.phoneNumber,
+        zone_id: u.zone_id
+      }));
+  }
+  // Fallback for real API
+  return [];
+}
+
+export async function promoteToTechnician(userId: number): Promise<void> {
+  if (USE_MOCK_AUTH) {
+    const user = mockUsers.find(u => u.user_id === userId);
+    if (user) {
+      user.role = "technician";
+    }
+    return;
+  }
+}
+
+export async function demoteToCitizen(userId: number): Promise<void> {
+  if (USE_MOCK_AUTH) {
+    const user = mockUsers.find(u => u.user_id === userId);
+    if (user) {
+      user.role = "citizen";
+    }
+    return;
+  }
+}
+
+export async function createTechnician(payload: RegisterPayload): Promise<void> {
+  if (USE_MOCK_AUTH) {
+    await registerMock({ ...payload, role: "technician" });
+    return;
+  }
+  // Fallback for real API
+}
+
+export async function getTechnicians(): Promise<AuthUser[]> {
+  if (USE_MOCK_AUTH) {
+    return mockUsers
+      .filter(u => u.role === "technician")
+      .map(u => ({ 
+        user_id: u.user_id, 
+        username: u.username,
+        full_name: u.full_name, 
+        email: u.email, 
+        role: u.role,
+        phone: u.phoneNumber,
+        zone_id: u.zone_id
+      }));
+  }
+  return [];
+}
+
+export async function updateUser(userId: number, updates: Partial<AuthUser>): Promise<void> {
+  if (USE_MOCK_AUTH) {
+    const user = mockUsers.find(u => u.user_id === userId);
+    if (user) {
+      if (updates.full_name) user.full_name = updates.full_name;
+      if (updates.email) user.email = updates.email;
+      if (updates.role) user.role = updates.role;
+      if (updates.phone) user.phoneNumber = updates.phone;
+      if (updates.zone_id) user.zone_id = updates.zone_id;
+    }
+    return;
+  }
+}
+
+

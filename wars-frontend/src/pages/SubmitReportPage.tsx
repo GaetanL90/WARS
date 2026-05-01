@@ -251,7 +251,7 @@ export function SubmitReportPage() {
             </svg>
           </div>
           <h2>Report Submitted!</h2>
-          <p>Thank you, <strong>{user?.name || user?.email}</strong>. Your report in <strong>{villageName}, {sectorName}</strong> has been received.</p>
+          <p>Thank you, <strong>{user?.full_name || user?.email}</strong>. Your report in <strong>{villageName}, {sectorName}</strong> has been received.</p>
           <button className="btn btn-primary" onClick={handleReset} style={{ marginTop: '24px' }}>
             Submit Another Report
           </button>
@@ -549,9 +549,9 @@ export function SubmitReportPage() {
           <div className="info-card card" style={{ marginTop: '20px' }}>
             <h4>Reporting as</h4>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
-              <div className="avatar-small">{user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}</div>
+              <div className="avatar-small">{user?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}</div>
               <div>
-                <strong style={{ display: 'block', fontSize: '0.95rem', color: '#10233c' }}>{user?.name || user?.email?.split("@")[0]}</strong>
+                <strong style={{ display: 'block', fontSize: '0.95rem', color: '#10233c' }}>{user?.full_name || user?.email?.split("@")[0]}</strong>
                 <span style={{ fontSize: '0.8rem', color: '#5f768f' }}>{user?.email}</span>
               </div>
             </div>

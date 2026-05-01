@@ -18,10 +18,18 @@ interface ReportDetails {
   image_path?: string;
   urgency?: Urgency;
   is_assigned_to_me?: boolean;
+  assigned_to?: string;
   resolved_at?: string;
   returned_at?: string;
   return_reason?: string;
+  escalation_reason?: string;
 }
+
+const MOCK_TECHNICIANS = [
+  { id: 1, name: "Jean Pierre" },
+  { id: 2, name: "Marie Claire" },
+  { id: 3, name: "Eric Habimana" },
+];
 
 const MOCK_REPORTS: Record<number, ReportDetails> = {
   1024: {
@@ -32,7 +40,8 @@ const MOCK_REPORTS: Record<number, ReportDetails> = {
     description: "Main pipe leaking near the primary school.",
     location: "Kagarama, Kanserege, Marembo",
     phone: "+250788123456",
-    resolved_at: "2024-03-21 10:00"
+    resolved_at: "2024-03-21 10:00",
+    assigned_to: "Jean Pierre"
   },
   1025: {
     id: 1025,
@@ -43,7 +52,8 @@ const MOCK_REPORTS: Record<number, ReportDetails> = {
     location: "Remera, Nyarutarama, Rukiri I",
     phone: "+250788123456",
     urgency: "critical",
-    is_assigned_to_me: true
+    is_assigned_to_me: true,
+    assigned_to: "Marie Claire"
   },
   1028: {
     id: 1028,
@@ -63,8 +73,19 @@ const MOCK_REPORTS: Record<number, ReportDetails> = {
     location: "Kimironko, Bibare, Kibagabaga",
     phone: "+250788123456",
     returned_at: "2024-03-24 11:30",
-    return_reason: "Escalated to management: Issue requires heavy machinery that is currently unavailable at this station.",
-    is_assigned_to_me: true
+    return_reason: "Issue requires heavy machinery that is currently unavailable at this station. Escalating to management.",
+    is_assigned_to_me: false,
+    assigned_to: "Eric Habimana"
+  },
+  1031: {
+    id: 1031,
+    issue_type: "Other",
+    internal_status: "escalated",
+    reported_at: "2024-03-28 08:45",
+    description: "Water pressure has been low for three days straight.",
+    location: "Gasabo, Kacyiru",
+    phone: "+250788123456",
+    escalation_reason: "Awaiting municipal response on infrastructure overhaul."
   }
 };
 
@@ -76,11 +97,18 @@ export function ReportDetailsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  // Status update states
+  // Status update states (Technician)
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [newStatus, setNewStatus] = useState<"resolved" | "returned">("resolved");
   const [returnReason, setReturnReason] = useState("");
   const [isSavingStatus, setIsSavingStatus] = useState(false);
+
+  // Manager actions
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedTech, setSelectedTech] = useState("");
+  
+  const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const [escalationReason, setEscalationReason] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -95,7 +123,7 @@ export function ReportDetailsPage() {
         <div className="empty-state">
           <h2>Report Not Found</h2>
           <p>The report you are looking for does not exist or you do not have permission to view it.</p>
-          <Link to="/reports/my" className="btn btn-primary" style={{ marginTop: '16px' }}>Back to My Reports</Link>
+          <Link to="/dashboard/reports/my" className="btn btn-primary" style={{ marginTop: '16px' }}>Back to My Reports</Link>
         </div>
       </div>
     );
@@ -132,7 +160,7 @@ export function ReportDetailsPage() {
   const handleDelete = () => {
     setIsDeleting(true);
     setTimeout(() => {
-      navigate("/reports/my");
+      navigate("/dashboard/reports/my");
     }, 1200);
   };
 
@@ -156,7 +184,40 @@ export function ReportDetailsPage() {
     }, 800);
   };
 
-  const isTechnicianView = auth?.user?.role === "technician" && report.is_assigned_to_me;
+  const handleAssign = () => {
+    if (!selectedTech) return;
+    setIsSavingStatus(true);
+    setTimeout(() => {
+      const techName = MOCK_TECHNICIANS.find(t => t.id.toString() === selectedTech)?.name;
+      setReport(prev => prev ? { ...prev, internal_status: "assigned", assigned_to: techName } : null);
+      setIsSavingStatus(false);
+      setShowAssignModal(false);
+      setSelectedTech("");
+    }, 600);
+  };
+
+  const handleEscalate = () => {
+    if (!escalationReason.trim()) return;
+    setIsSavingStatus(true);
+    setTimeout(() => {
+      setReport(prev => prev ? { ...prev, internal_status: "escalated", escalation_reason: escalationReason } : null);
+      setIsSavingStatus(false);
+      setShowEscalateModal(false);
+      setEscalationReason("");
+    }, 600);
+  };
+
+  const handleConfirm = () => {
+    setIsSavingStatus(true);
+    setTimeout(() => {
+      setReport(prev => prev ? { ...prev, internal_status: "pending" } : null);
+      setIsSavingStatus(false);
+    }, 600);
+  };
+
+  const isTechnicianView = auth?.user?.role === "technician";
+  const isManagerView = auth?.user?.role === "manager" || auth?.user?.role === "admin";
+  const canAssignOrEscalate = isManagerView && (report.internal_status === "new" || report.internal_status === "returned");
 
   return (
     <div className="page-container">
@@ -171,12 +232,13 @@ export function ReportDetailsPage() {
         <div className="header-title-row">
           <div className="flex-column">
             <h1>Report #{report.id}</h1>
-            {isTechnicianView && <span className="badge badge-primary">Assigned Case</span>}
+            {isTechnicianView && report.is_assigned_to_me && <span className="badge badge-primary">Assigned Case</span>}
+            {report.internal_status === "escalated" && <span className="badge badge-warning" style={{ background: '#fef3c7', color: '#b45309' }}>Escalated Case</span>}
           </div>
           <div className="header-actions">
-            {report.internal_status === "new" && !isTechnicianView && (
+            {report.internal_status === "new" && !isTechnicianView && !isManagerView && (
               <div className="action-button-group">
-                <button className="btn btn-outline btn-with-icon" onClick={() => navigate(`/reports/edit/${report.id}`)}>
+                <button className="btn btn-outline btn-with-icon" onClick={() => navigate(`/dashboard/reports/edit/${report.id}`)}>
                   Edit
                 </button>
                 <div className="action-divider"></div>
@@ -185,7 +247,26 @@ export function ReportDetailsPage() {
                 </button>
               </div>
             )}
-            {isTechnicianView && report.internal_status === "assigned" && (
+            {canAssignOrEscalate && (
+              <div className="action-button-group">
+                {report.internal_status === "new" && (
+                  <>
+                    <button className="btn btn-success btn-with-icon" onClick={handleConfirm}>
+                      Confirm Report
+                    </button>
+                    <div className="action-divider"></div>
+                  </>
+                )}
+                <button className="btn btn-primary btn-with-icon" onClick={() => setShowAssignModal(true)}>
+                  Assign Technician
+                </button>
+                <div className="action-divider"></div>
+                <button className="btn btn-outline btn-with-icon" onClick={() => setShowEscalateModal(true)}>
+                  Escalate
+                </button>
+              </div>
+            )}
+            {isTechnicianView && report.is_assigned_to_me && report.internal_status === "assigned" && (
               <button className="btn btn-primary" onClick={() => setShowUpdateModal(true)}>
                 Update Status
               </button>
@@ -246,13 +327,29 @@ export function ReportDetailsPage() {
                   <span className="detail-value">{report.returned_at}</span>
                 </div>
               )}
+              
+              {/* Conditional Alert Boxes for Returns & Escalations */}
               {report.return_reason && (
-                <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', background: '#fff1f2', padding: '12px', borderRadius: '8px', border: '1px solid #fecdd3', marginTop: '12px' }}>
-                  <span className="detail-label" style={{ color: '#be123c' }}>Return/Escalation Reason</span>
-                  <p className="detail-description" style={{ color: '#9f1239', fontWeight: 500 }}>{report.return_reason}</p>
+                <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', background: '#fff1f2', padding: '16px', borderRadius: '8px', border: '1px solid #fecdd3', marginTop: '16px' }}>
+                  <span className="detail-label" style={{ color: '#be123c', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    Technician Return Reason
+                  </span>
+                  <p className="detail-description" style={{ color: '#9f1239', fontWeight: 500, margin: 0 }}>{report.return_reason}</p>
                 </div>
               )}
-              <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginTop: report.return_reason ? '16px' : '0' }}>
+              
+              {report.escalation_reason && (
+                <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', background: '#fffbeb', padding: '16px', borderRadius: '8px', border: '1px solid #fde68a', marginTop: '16px' }}>
+                  <span className="detail-label" style={{ color: '#b45309', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Escalation Notes
+                  </span>
+                  <p className="detail-description" style={{ color: '#92400e', fontWeight: 500, margin: 0 }}>{report.escalation_reason}</p>
+                </div>
+              )}
+
+              <div className="detail-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', marginTop: '16px' }}>
                 <span className="detail-label">Description</span>
                 <p className="detail-description">{report.description}</p>
               </div>
@@ -275,23 +372,40 @@ export function ReportDetailsPage() {
         </div>
 
         <aside className="detail-sidebar">
-          <div className="info-card card" style={{ background: '#f8fafc' }}>
+          <div className="info-card card" style={{ background: '#f8fafc', marginBottom: '20px' }}>
             <h4>Current Status</h4>
             <div className="current-status-display">
               <span className={`status-pill ${
                 report.internal_status === "resolved" ? "status-resolved" : 
-                report.internal_status === "returned" ? "status-pending" : "status-assigned"
-              }`} style={{ fontSize: '1rem', padding: '8px 16px' }}>
+                report.internal_status === "returned" || report.internal_status === "escalated" ? "status-pending" : 
+                report.internal_status === "assigned" ? "status-assigned" : "status-pending"
+              }`} style={{ fontSize: '1rem', padding: '8px 16px', background: report.internal_status === 'new' ? '#e2e8f0' : undefined, color: report.internal_status === 'new' ? '#334155' : undefined }}>
                 {report.internal_status.toUpperCase()}
               </span>
             </div>
             <p style={{ fontSize: '0.85rem', color: '#5f768f', marginTop: '16px', lineHeight: '1.5' }}>
-              {report.internal_status === "new" && "Waiting for initial review."}
-              {report.internal_status === "assigned" && "A technician is working on this."}
+              {report.internal_status === "new" && "Waiting for initial review and assignment."}
+              {report.internal_status === "assigned" && "A technician is currently working on this issue."}
               {report.internal_status === "resolved" && "The issue has been resolved."}
-              {report.internal_status === "returned" && "This case has been escalated back to management for further action."}
+              {report.internal_status === "returned" && "This case has been returned by the technician."}
+              {report.internal_status === "escalated" && "This case has been escalated out of the system."}
             </p>
           </div>
+          
+          {(report.assigned_to || report.internal_status === "assigned") && (
+            <div className="info-card card">
+              <h4>Assigned Technician</h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
+                <div className="avatar-small" style={{ background: '#e0e7ff', color: '#4f46e5' }}>
+                  {report.assigned_to?.charAt(0).toUpperCase() || 'T'}
+                </div>
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem', color: '#10233c' }}>{report.assigned_to || 'Assigned Technician'}</strong>
+                  <span style={{ fontSize: '0.8rem', color: '#5f768f' }}>Field Operations</span>
+                </div>
+              </div>
+            </div>
+          )}
         </aside>
       </div>
 
@@ -328,6 +442,65 @@ export function ReportDetailsPage() {
                 {isSavingStatus ? "Saving..." : "Confirm Update"}
               </button>
               <button className="btn btn-outline" onClick={() => { setShowUpdateModal(false); setReturnReason(""); }} disabled={isSavingStatus}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAssignModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <h2>Assign Technician</h2>
+            <p className="mb-16">Select an available technician to handle this case.</p>
+            
+            <div className="filter-group mb-24">
+              <label>Technician</label>
+              <select 
+                value={selectedTech}
+                onChange={(e) => setSelectedTech(e.target.value)}
+                className="input-field"
+                required
+              >
+                <option value="" disabled>Select a technician...</option>
+                {MOCK_TECHNICIANS.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={handleAssign} disabled={!selectedTech || isSavingStatus}>
+                {isSavingStatus ? "Assigning..." : "Assign"}
+              </button>
+              <button className="btn btn-outline" onClick={() => { setShowAssignModal(false); setSelectedTech(""); }} disabled={isSavingStatus}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEscalateModal && (
+        <div className="modal-overlay">
+          <div className="modal-content warning-modal" style={{ maxWidth: '400px', textAlign: 'left' }}>
+            <h2 style={{ color: '#b45309', marginBottom: '12px' }}>Escalate Case</h2>
+            <p className="mb-16" style={{ color: '#5f768f' }}>Marking this case as escalated indicates it requires out-of-system intervention (e.g., municipal authorities, major contractors).</p>
+            
+            <div className="filter-group mb-24">
+              <label>Reason for Escalation <span style={{ color: '#ef4444' }}>*</span></label>
+              <textarea 
+                value={escalationReason}
+                onChange={(e) => setEscalationReason(e.target.value)}
+                placeholder="e.g. Requires heavy machinery, awaiting municipal approval..."
+                className="input-field"
+                style={{ minHeight: '100px', resize: 'vertical' }}
+                required
+              />
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-primary" style={{ background: '#d97706', borderColor: '#d97706' }} onClick={handleEscalate} disabled={!escalationReason.trim() || isSavingStatus}>
+                {isSavingStatus ? "Escalating..." : "Confirm Escalation"}
+              </button>
+              <button className="btn btn-outline" onClick={() => { setShowEscalateModal(false); setEscalationReason(""); }} disabled={isSavingStatus}>Cancel</button>
             </div>
           </div>
         </div>

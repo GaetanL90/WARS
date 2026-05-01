@@ -37,9 +37,9 @@ export function ProfilePage() {
     }
   };
 
-  const [firstName, setFirstName] = useState(user?.name?.split(" ")[0] || "");
+  const [firstName, setFirstName] = useState(user?.full_name?.split(" ")[0] || "");
   const [middleName, setMiddleName] = useState("");
-  const [lastName, setLastName] = useState(user?.name?.split(" ").slice(1).join(" ") || "");
+  const [lastName, setLastName] = useState(user?.full_name?.split(" ").slice(1).join(" ") || "");
   const [phoneNoPrefix, setPhoneNoPrefix] = useState("780000000");
   const [email, setEmail] = useState(user?.email || "");
 
@@ -211,7 +211,7 @@ export function ProfilePage() {
     }, 1000);
   };
 
-  const initial = user?.name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U";
+  const initial = user?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U";
 
   return (
     <div className="page-container">

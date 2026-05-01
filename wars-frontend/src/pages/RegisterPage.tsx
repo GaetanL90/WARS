@@ -259,7 +259,7 @@ export function RegisterPage() {
   };
 
   if (isAuthenticated) {
-    return <Navigate to="/portal" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   useEffect(() => {

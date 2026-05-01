@@ -90,6 +90,41 @@ function UserIcon() {
   );
 }
 
+function UsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+      <circle cx="9" cy="7" r="4"></circle>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+  );
+}
+
+function AlertCircleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+  );
+}
+
+function ServerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+      <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+      <line x1="6" y1="6" x2="6.01" y2="6"></line>
+      <line x1="6" y1="18" x2="6.01" y2="18"></line>
+    </svg>
+  );
+}
+
+
+
+
 export function Layout() {
   const { auth, logout, hasAnyRole } = useAuth();
   const [isSidenavOpen, setIsSidenavOpen] = useState(true);
@@ -114,8 +149,8 @@ export function Layout() {
   };
 
   const user = auth?.user;
-  const initial = user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || "U";
-  const displayName = user?.name || user?.email?.split('@')[0] || "User";
+  const initial = user?.full_name ? user.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || "U";
+  const displayName = user?.full_name || user?.email?.split('@')[0] || "User";
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -156,11 +191,15 @@ export function Layout() {
           {/* Citizen-only links */}
           {hasAnyRole(["citizen"]) && (
             <>
-              <Link to="/reports/new" className={`nav-item ${location.pathname === "/reports/new" ? "active" : ""}`}>
+              <Link to="/dashboard/citizen" className={`nav-item ${location.pathname === "/dashboard/citizen" ? "active" : ""}`}>
+                <LayoutDashboardIcon />
+                <span>My Dashboard</span>
+              </Link>
+              <Link to="/dashboard/reports/new" className={`nav-item ${location.pathname === "/dashboard/reports/new" ? "active" : ""}`}>
                 <FilePlusIcon />
                 <span>Submit Report</span>
               </Link>
-              <Link to="/reports/my" className={`nav-item ${location.pathname === "/reports/my" ? "active" : ""}`}>
+              <Link to="/dashboard/reports/my" className={`nav-item ${location.pathname === "/dashboard/reports/my" ? "active" : ""}`}>
                 <ClipboardListIcon />
                 <span>My Reports</span>
               </Link>
@@ -170,20 +209,24 @@ export function Layout() {
           {/* Technician links */}
           {hasAnyRole(["technician"]) && (
             <>
-              <Link to="/reports/assigned" className={`nav-item ${location.pathname === "/reports/assigned" ? "active" : ""}`}>
+              <Link to="/dashboard/technician" className={`nav-item ${location.pathname === "/dashboard/technician" ? "active" : ""}`}>
+                <LayoutDashboardIcon />
+                <span>Tech Dashboard</span>
+              </Link>
+              <Link to="/dashboard/reports/assigned" className={`nav-item ${location.pathname === "/dashboard/reports/assigned" ? "active" : ""}`}>
                 <WrenchIcon />
                 <span>Assigned Case</span>
               </Link>
-              <Link to="/reports/new" className={`nav-item ${location.pathname === "/reports/new" ? "active" : ""}`}>
+              <Link to="/dashboard/reports/new" className={`nav-item ${location.pathname === "/dashboard/reports/new" ? "active" : ""}`}>
                 <FilePlusIcon />
                 <span>Submit Report</span>
               </Link>
-              <Link to="/reports/my" className={`nav-item ${location.pathname === "/reports/my" ? "active" : ""}`}>
+              <Link to="/dashboard/reports/my" className={`nav-item ${location.pathname === "/dashboard/reports/my" ? "active" : ""}`}>
                 <ClipboardListIcon />
                 <span>Submitted Reports</span>
               </Link>
-              <Link to="/reports/history" className={`nav-item ${location.pathname === "/reports/history" ? "active" : ""}`}>
-                <LayoutDashboardIcon />
+              <Link to="/dashboard/reports/history" className={`nav-item ${location.pathname === "/dashboard/reports/history" ? "active" : ""}`}>
+                <ClipboardListIcon />
                 <span>Case Reports</span>
               </Link>
             </>
@@ -192,11 +235,31 @@ export function Layout() {
           {/* Manager / Admin links */}
           {hasAnyRole(["manager", "admin"]) && (
             <>
-              <Link to="/portal" className={`nav-item ${location.pathname === "/portal" ? "active" : ""}`}>
+              <Link to="/dashboard/manager" className={`nav-item ${location.pathname === "/dashboard/manager" ? "active" : ""}`}>
                 <LayoutDashboardIcon />
-                <span>Portal</span>
+                <span>Manager Dashboard</span>
               </Link>
-              <Link to="/analytics" className={`nav-item ${location.pathname === "/analytics" ? "active" : ""}`}>
+              <Link to="/dashboard/users" className={`nav-item ${location.pathname === "/dashboard/users" ? "active" : ""}`}>
+                <UsersIcon />
+                <span>Staff Management</span>
+              </Link>
+              <Link to="/dashboard/infrastructure" className={`nav-item ${location.pathname === "/dashboard/infrastructure" ? "active" : ""}`}>
+                <ServerIcon />
+                <span>Infrastructure Hub</span>
+              </Link>
+              <Link to="/dashboard/infrastructure/zones" className={`nav-item ${location.pathname === "/dashboard/infrastructure/zones" ? "active" : ""}`} style={{ paddingLeft: '40px', fontSize: '0.9rem' }}>
+                <ClipboardListIcon />
+                <span>Zone Directory</span>
+              </Link>
+              <Link to="/dashboard/infrastructure/pipes" className={`nav-item ${location.pathname === "/dashboard/infrastructure/pipes" ? "active" : ""}`} style={{ paddingLeft: '40px', fontSize: '0.9rem' }}>
+                <WrenchIcon />
+                <span>Pipe Network</span>
+              </Link>
+              <Link to="/dashboard/incidents" className={`nav-item ${location.pathname === "/dashboard/incidents" ? "active" : ""}`}>
+                <AlertCircleIcon />
+                <span>Incident Management</span>
+              </Link>
+              <Link to="/dashboard/analytics" className={`nav-item ${location.pathname === "/dashboard/analytics" ? "active" : ""}`}>
                 <BarChartIcon />
                 <span>Analytics</span>
               </Link>
@@ -272,8 +335,8 @@ export function Layout() {
                     <span>{user?.email}</span>
                   </div>
                   <div className="dropdown-divider"></div>
-                  <Link to="/profile" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>Profile</Link>
-                  <Link to="/settings" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>Settings</Link>
+                  <Link to="/dashboard/profile" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>Profile</Link>
+                  <Link to="/dashboard/settings" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>Settings</Link>
                   <div className="dropdown-divider"></div>
                   <Link to="/" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>
                     Home

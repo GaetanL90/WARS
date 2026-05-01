@@ -29,7 +29,7 @@ export function ForgotPasswordPage() {
   const [resendRemainingSeconds, setResendRemainingSeconds] = useState(0);
 
   if (isAuthenticated) {
-    return <Navigate to="/portal" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   useEffect(() => {

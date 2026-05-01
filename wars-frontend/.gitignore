@@ -4,3 +4,8 @@ dist
 .env.local
 .DS_Store
 *.log
+
+# Documentation and ERDs
+wars_erd_chen_clean.svg
+WARS Task #6_V1.0.pdf
+wars_erd_named_relationships_optionA_v6.svg

@@ -1,10 +1,13 @@
 export type UserRole = "citizen" | "technician" | "manager" | "admin";
 
 export interface AuthUser {
-  id: number;
+  user_id: number;
   role: UserRole;
-  email?: string;
-  name?: string;
+  email: string;
+  username: string;
+  full_name: string;
+  phone?: string;
+  zone_id?: string;
 }
 
 export interface AuthTokens {
@@ -25,6 +28,7 @@ export interface RegisterPayload {
   firstName: string;
   middleName?: string;
   lastName: string;
+  username?: string;
   phoneNumber: string;
   email: string;
   district: string;
@@ -33,6 +37,7 @@ export interface RegisterPayload {
   village: string;
   password: string;
   role: UserRole;
+  zone_id?: string;
 }
 
 export interface StartRegistrationResponse {

@@ -1,7 +1,10 @@
 import joblib
 import json
 import pandas as pd
-from .feature_engineering import compute_engineered_features
+try:
+    from .feature_engineering import compute_engineered_features
+except ImportError:
+    from feature_engineering import compute_engineered_features
 
 class WARSPredictor:
     def __init__(self):
@@ -31,5 +34,9 @@ class WARSPredictor:
             "potability": potability,
             "confidence": round(float(confidence), 2),
             "failure_risk_score": round(float(risk_score), 2),
-            "alert_triggered": potability == "Unsafe" or risk_score > 0.7 [cite: 46]
+            "alert_triggered": bool(potability == "Unsafe" or risk_score > 0.7 )
         }
+        
+if __name__ == "__main__":
+    predictor = WARSPredictor()
+    print("WARS Predictor initialized successfully.")

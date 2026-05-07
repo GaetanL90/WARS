@@ -10,4 +10,10 @@ models/*.Identifier
 # Ignore virtual environment
 #============================
 
-wars-backend/
+wars-backend/*
+
+#====================
+# Ignore build files
+#====================
+
+ml/__pycache__

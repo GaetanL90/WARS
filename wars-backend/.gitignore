@@ -1,0 +1,13 @@
+#======================================
+# Ignore Windows Zone Identifier files
+#======================================
+
+models/*.Identifier
+*.identifier
+*.Zone.Identifier
+
+#============================
+# Ignore virtual environment
+#============================
+
+wars-backend/

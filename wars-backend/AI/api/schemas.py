@@ -5,7 +5,7 @@ from typing import Optional
 class SensorPayload(BaseModel):
     """
     Full structured payload from a WARS sensor node.
-    Matches sensor_simulator_v2.py output exactly.
+    Matches sensor_simulator.py output exactly.
     """
 
     class Metadata(BaseModel):

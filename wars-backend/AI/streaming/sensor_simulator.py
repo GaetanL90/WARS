@@ -6,6 +6,7 @@ Aligned with v4 dataset schema and real sensor physics.
 
 import time
 import json
+import requests
 import numpy as np
 from datetime import datetime
 from pathlib import Path
@@ -459,6 +460,14 @@ if __name__ == "__main__":
 
             # 2. Print debug summary
             node.print_summary(reading)
+            
+            # Hit the API
+            response =  requests.post(
+                "http://127.0.0.1:8000/sensors/sensor",
+                json=reading,
+                timeout=30
+            )
+            print(f"  API → {response.status_code}: {response.json()}")
 
             # 3. Optional ML prediction stream (future)
             #producer.send(PRED_TOPIC, reading)

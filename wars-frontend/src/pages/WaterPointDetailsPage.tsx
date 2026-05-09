@@ -605,7 +605,6 @@ export function WaterPointDetailsPage() {
           <div className="grid-2 flex-gap">
             {data.sensors.map((sensor) => {
               const color = SENSOR_COLORS[sensor.type] || '#10b981';
-              const bounds = SENSOR_BOUNDS[sensor.type];
               return (
               <div
                 key={sensor.id}

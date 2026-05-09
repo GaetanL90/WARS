@@ -54,7 +54,7 @@ export function LoginPage() {
   const getDefaultDest = (r: string | undefined) => {
     if (r === "citizen") return "/reports/new";
     if (r === "technician") return "/reports/assigned";
-    return "/portal";
+    return "/dashboard";
   };
 
   if (isAuthenticated) {

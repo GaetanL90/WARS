@@ -63,6 +63,30 @@ const MOCK_ALERTS: Record<string, SensorAlertDetails> = {
     threshold_limit: "< 2.0 Bar",
     description: "Consistent pressure drop detected over 4 hours. Likely a minor pipe fracture.",
     assigned_to: "Marie Claire"
+  },
+  "AL-805": {
+    alert_id: "AL-805",
+    sensor_id: "SN-44E",
+    sensor_name: "ORP Sensor - Gikondo",
+    alert_type: "Chemical Contamination Risk",
+    location: "Gikondo Industrial Zone",
+    timestamp: "2024-04-02 09:30",
+    status: "new",
+    telemetry_value: "150 mV",
+    threshold_limit: "< 250 mV",
+    description: "Significant drop in Oxidation-Reduction Potential. High probability of chemical contamination in the distribution line."
+  },
+  "AL-806": {
+    alert_id: "AL-806",
+    sensor_id: "SN-55F",
+    sensor_name: "DO Sensor - Kanombe",
+    alert_type: "Organic Loading Alert",
+    location: "Kanombe South Outpost",
+    timestamp: "2024-04-02 11:45",
+    status: "new",
+    telemetry_value: "2.4 mg/L",
+    threshold_limit: "< 4.0 mg/L",
+    description: "Dissolved Oxygen levels have plummeted, suggesting a high organic load or bacterial decomposition spike."
   }
 };
 

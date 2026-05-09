@@ -232,7 +232,7 @@ export function Layout() {
             </>
           )}
 
-          {/* Manager / Admin links */}
+          {/* Manager & Admin links (Menu is primarily designed for Manager for now) */}
           {hasAnyRole(["manager", "admin"]) && (
             <>
               <Link to="/dashboard/manager" className={`nav-item ${location.pathname === "/dashboard/manager" ? "active" : ""}`}>

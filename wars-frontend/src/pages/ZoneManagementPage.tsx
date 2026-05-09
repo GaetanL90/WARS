@@ -1,23 +1,6 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";type Zone = {
-  zone_id: string;
-  name: string;
-  province: string;
-  district: string;
-  sector: string;
-  cell: string;
-  village: string;
-  pointCount: number;
-  health: number;
-  status: string;
-  notes?: string;
-};
-
-const INITIAL_ZONES: Zone[] = [
-  { zone_id: "zone-a", name: "Nyamata Center", province: "Kigali", district: "Bugesera", sector: "Nyamata", cell: "Biryogo", village: "Akabahizi", pointCount: 12, health: 98, status: "stable", notes: "Main distribution hub for Nyamata sector." },
-  { zone_id: "zone-b", name: "Kabeza Bypass", province: "Kigali", district: "Bugesera", sector: "Kabeza", cell: "Kabeza I", village: "Rugarama", pointCount: 8, health: 100, status: "stable" },
-  { zone_id: "zone-c", name: "Nyarutarama North", province: "Kigali", district: "Gasabo", sector: "Nyarutarama", cell: "Akabeza", village: "Isange", pointCount: 15, health: 75, status: "warning", notes: "Experiencing flow anomalies at 3 water points." },
-];
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { zoneStore, Zone } from "../utils/zoneStore";
 
 function PlusIcon() {
   return (
@@ -29,7 +12,11 @@ function PlusIcon() {
 
 export function ZoneManagementPage() {
   const navigate = useNavigate();
-  const [zones] = useState<Zone[]>(INITIAL_ZONES);
+  const [zones, setZones] = useState<Zone[]>([]);
+
+  useEffect(() => {
+    setZones(zoneStore.getAll());
+  }, []);
 
   return (
     <div className="page-container">
@@ -39,7 +26,7 @@ export function ZoneManagementPage() {
             <h1>Zone Governance</h1>
             <p>Manage distribution zones from province down to village level.</p>
           </div>
-          <button className="btn btn-primary" onClick={() => navigate('/infrastructure/zones/new')}>
+          <button className="btn btn-primary" onClick={() => navigate('/dashboard/infrastructure/zones/new')}>
             <PlusIcon /> Create New Zone
           </button>
         </div>

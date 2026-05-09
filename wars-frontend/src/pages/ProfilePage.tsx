@@ -42,6 +42,7 @@ export function ProfilePage() {
   const [lastName, setLastName] = useState(user?.full_name?.split(" ").slice(1).join(" ") || "");
   const [phoneNoPrefix, setPhoneNoPrefix] = useState("780000000");
   const [email, setEmail] = useState(user?.email || "");
+  const [expertise, setExpertise] = useState(user?.expertise || "");
 
   // Administrative Data States
   const [provinces, setProvinces] = useState<AdminEntity[]>([]);
@@ -306,6 +307,19 @@ export function ProfilePage() {
               <label>Email Address</label>
               <input type="email" className="input-field" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
+
+            {user?.role === 'technician' && (
+              <div className="form-group mb-16">
+                <label>Technical Expertise / Specialization</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={expertise} 
+                  onChange={e => setExpertise(e.target.value)} 
+                  placeholder="e.g. IoT, Plumbing, Water Quality"
+                />
+              </div>
+            )}
 
             <h4 className="section-title">Location Details</h4>
             

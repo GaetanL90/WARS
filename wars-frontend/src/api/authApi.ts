@@ -50,6 +50,7 @@ interface MockUserRecord {
     village: string;
   };
   role: AuthUser["role"];
+  expertise?: string;
 }
 
 interface PendingRegistration {
@@ -69,8 +70,10 @@ interface PendingPasswordReset {
 export const mockUsers: MockUserRecord[] = [
   { user_id: 1, username: "admin", full_name: "Admin User", email: "admin@wars.local", password: "123456", enabled: true, role: "admin", zone_id: "zone-a" },
   { user_id: 2, username: "manager", full_name: "Manager User", email: "manager@wars.local", password: "123456", enabled: true, role: "manager", zone_id: "zone-a" },
-  { user_id: 3, username: "technician", full_name: "Technician User", email: "technician@wars.local", password: "123456", enabled: true, role: "technician", zone_id: "zone-b" },
-  { user_id: 4, username: "citizen", full_name: "Citizen User", email: "citizen@wars.local", password: "123456", enabled: true, role: "citizen", zone_id: "zone-a" }
+  { user_id: 3, username: "jp_habimana", full_name: "Jean-Pierre Habimana", email: "jp.habimana@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Bugesera", expertise: "IoT & Sensors" },
+  { user_id: 4, username: "y_mukamana", full_name: "Yvonne Mukamana", email: "y.mukamana@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Bugesera", expertise: "Pipe Infrastructure" },
+  { user_id: 5, username: "m_uwase", full_name: "Marie-Louise Uwase", email: "m.uwase@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Kicukiro", expertise: "Water Quality Specialist" },
+  { user_id: 6, username: "citizen", full_name: "Citizen User", email: "citizen@wars.local", password: "123456", enabled: true, role: "citizen", zone_id: "zone-a" }
 ];
 const pendingRegistrations: PendingRegistration[] = [];
 const pendingPasswordResets: PendingPasswordReset[] = [];
@@ -95,7 +98,8 @@ async function loginMock(payload: LoginPayload): Promise<AuthState> {
       username: user.username,
       full_name: user.full_name,
       phone: user.phoneNumber,
-      zone_id: user.zone_id
+      zone_id: user.zone_id,
+      expertise: user.expertise
     }
   };
 }
@@ -122,7 +126,8 @@ async function registerMock(payload: RegisterPayload): Promise<RegisterResponseD
       cell: payload.cell,
       village: payload.village
     },
-    role: payload.role
+    role: payload.role,
+    expertise: payload.expertise
   };
 
   mockUsers.push(created);
@@ -387,7 +392,8 @@ export async function searchUsers(query: string): Promise<AuthUser[]> {
         email: u.email, 
         role: u.role,
         phone: u.phoneNumber,
-        zone_id: u.zone_id
+        zone_id: u.zone_id,
+        expertise: u.expertise
       }));
   }
   // Fallback for real API
@@ -433,7 +439,8 @@ export async function getTechnicians(): Promise<AuthUser[]> {
         email: u.email, 
         role: u.role,
         phone: u.phoneNumber,
-        zone_id: u.zone_id
+        zone_id: u.zone_id,
+        expertise: u.expertise
       }));
   }
   return [];
@@ -448,6 +455,7 @@ export async function updateUser(userId: number, updates: Partial<AuthUser>): Pr
       if (updates.role) user.role = updates.role;
       if (updates.phone) user.phoneNumber = updates.phone;
       if (updates.zone_id) user.zone_id = updates.zone_id;
+      if (updates.expertise) user.expertise = updates.expertise;
     }
     return;
   }

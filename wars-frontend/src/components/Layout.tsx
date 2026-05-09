@@ -232,8 +232,8 @@ export function Layout() {
             </>
           )}
 
-          {/* Manager & Admin links (Menu is primarily designed for Manager for now) */}
-          {hasAnyRole(["manager", "admin"]) && (
+          {/* Manager links */}
+          {hasAnyRole(["manager"]) && (
             <>
               <Link to="/dashboard/manager" className={`nav-item ${location.pathname === "/dashboard/manager" ? "active" : ""}`}>
                 <LayoutDashboardIcon />
@@ -262,6 +262,24 @@ export function Layout() {
               <Link to="/dashboard/analytics" className={`nav-item ${location.pathname === "/dashboard/analytics" ? "active" : ""}`}>
                 <BarChartIcon />
                 <span>Analytics</span>
+              </Link>
+            </>
+          )}
+
+          {/* Admin links */}
+          {hasAnyRole(["admin"]) && (
+            <>
+              <Link to="/dashboard/infrastructure" className={`nav-item ${location.pathname === "/dashboard/infrastructure" ? "active" : ""}`}>
+                <ServerIcon />
+                <span>Infrastructure Hub</span>
+              </Link>
+              <Link to="/dashboard/infrastructure/zones" className={`nav-item ${location.pathname === "/dashboard/infrastructure/zones" ? "active" : ""}`} style={{ paddingLeft: '40px', fontSize: '0.9rem' }}>
+                <ClipboardListIcon />
+                <span>Zone Directory</span>
+              </Link>
+              <Link to="/dashboard/infrastructure/pipes" className={`nav-item ${location.pathname === "/dashboard/infrastructure/pipes" ? "active" : ""}`} style={{ paddingLeft: '40px', fontSize: '0.9rem' }}>
+                <WrenchIcon />
+                <span>Pipe Network</span>
               </Link>
             </>
           )}

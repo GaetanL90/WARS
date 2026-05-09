@@ -44,7 +44,13 @@ export interface WaterPoint {
   config: WaterPointConfig;
   conditions: WaterPointConditions;
   hardwareId: string;
+  firmwareVersion?: string;
   installationDate: string;
   lastMaintenance: string;
   assignedSector: string;
+  // Assessment fields from IoT simulator
+  scenario?: string;
+  riskScore?: number;
+  isPotable?: boolean;
+  assessmentFlags?: Record<string, boolean>;
 }

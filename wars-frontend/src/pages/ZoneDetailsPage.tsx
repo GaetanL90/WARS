@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
-// In production this would come from an API call using the zone_id param.
-// For now we use the same mock data.
-const MOCK_ZONES = [
-  { zone_id: "zone-a", name: "Nyamata Center", province: "Eastern Province", district: "Bugesera", sector: "Nyamata", cell: "Biryogo", village: "Akabahizi", pointCount: 12, health: 98, status: "stable", notes: "Main distribution hub for Nyamata sector." },
-  { zone_id: "zone-b", name: "Kabeza Bypass", province: "Eastern Province", district: "Bugesera", sector: "Kabeza", cell: "Kabeza I", village: "Rugarama", pointCount: 8, health: 100, status: "stable", notes: "" },
-  { zone_id: "zone-c", name: "Nyarutarama North", province: "Eastern Province", district: "Gasabo", sector: "Nyarutarama", cell: "Akabeza", village: "Isange", pointCount: 15, health: 75, status: "warning", notes: "Experiencing flow anomalies at 3 water points." },
-];
+import { zoneStore } from "../utils/zoneStore";
 
 function BackIcon() {
   return (
@@ -50,8 +43,9 @@ export function ZoneDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedVillageId, setSelectedVillageId] = useState<number | null>(null);
 
-  const zone = MOCK_ZONES.find(z => z.zone_id === id);
+  const zone = id ? zoneStore.getById(id) : undefined;
 
   if (!zone) {
     return (
@@ -64,8 +58,10 @@ export function ZoneDetailsPage() {
   }
 
   const handleDelete = () => {
-    // In production: call API to delete zone
-    navigate('/dashboard/infrastructure/zones');
+    if (id) {
+      zoneStore.delete(id);
+      navigate('/dashboard/infrastructure/zones');
+    }
   };
 
   return (
@@ -101,13 +97,47 @@ export function ZoneDetailsPage() {
         {/* Left: Identity */}
         <div>
           <div className="card mb-24">
-            <h3 className="dashboard-section-title mb-16">Administrative Location</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-              <InfoRow label="Province" value={zone.province} />
-              <InfoRow label="District" value={zone.district} />
-              <InfoRow label="Sector" value={zone.sector} />
-              <InfoRow label="Cell" value={zone.cell} />
-              <InfoRow label="Village" value={zone.village} />
+            <h3 className="dashboard-section-title mb-16">Villages in Zone</h3>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {(zone.villages || []).length > 0 ? (
+                zone.villages?.map(v => (
+                  <div key={v.id} 
+                    style={{ 
+                      padding: '16px', 
+                      background: selectedVillageId === v.id ? '#f0f7ff' : '#ffffff', 
+                      borderRadius: '12px', 
+                      border: '1px solid',
+                      borderColor: selectedVillageId === v.id ? '#3b82f6' : '#e2e8f0',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onClick={() => setSelectedVillageId(selectedVillageId === v.id ? null : v.id)}
+                  >
+                    <div className="flex-between">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#3b82f6' }}></div>
+                        <span style={{ fontWeight: 700, color: '#1e293b' }}>{v.name}</span>
+                      </div>
+                      <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        {selectedVillageId === v.id ? 'Hide Hierarchy' : 'View Hierarchy'}
+                      </span>
+                    </div>
+
+                    {selectedVillageId === v.id && (
+                      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed #cbd5e1', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                        <InfoRow label="Province" value={zone.province} />
+                        <InfoRow label="District" value={zone.district} />
+                        <InfoRow label="Sector" value={v.sector} />
+                        <InfoRow label="Cell" value={v.cell} />
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#64748b', fontStyle: 'italic' }}>
+                  No villages registered for this zone.
+                </div>
+              )}
             </div>
           </div>
 

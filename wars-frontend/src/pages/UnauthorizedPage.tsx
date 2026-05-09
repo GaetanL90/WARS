@@ -12,7 +12,7 @@ export function UnauthorizedPage() {
     const role = auth?.user?.role;
     if (role === "technician") return "/reports/assigned";
     if (role === "citizen") return "/reports/new";
-    if (role === "manager" || role === "admin") return "/portal";
+    if (role === "manager" || role === "admin") return "/dashboard";
     return "/";
   };
 

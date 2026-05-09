@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 
 // Mock data - in production, fetch by ID from API
 const MOCK_TECHNICIANS = [
-  { user_id: "3", full_name: "Jean-Pierre Habimana", username: "jp_habimana", email: "jp.habimana@wars.rw", phone: "+250788001001", role: "technician", zone_id: "Bugesera", province: "Eastern Province", district: "Bugesera", sector: "Nyamata", cell: "Biryogo", village: "Akabahizi" },
-  { user_id: "4", full_name: "Yvonne Mukamana", username: "y_mukamana", email: "y.mukamana@wars.rw", phone: "+250788002002", role: "technician", zone_id: "Bugesera", province: "Eastern Province", district: "Bugesera", sector: "Kabeza", cell: "Kabeza I", village: "Rugarama" },
+  { user_id: "3", full_name: "Jean-Pierre Habimana", username: "jp_habimana", email: "jp.habimana@wars.rw", phone: "+250788001001", role: "technician", zone_id: "Bugesera", province: "Eastern Province", district: "Bugesera", sector: "Nyamata", cell: "Biryogo", village: "Akabahizi", expertise: "IoT & Sensors" },
+  { user_id: "4", full_name: "Yvonne Mukamana", username: "y_mukamana", email: "y.mukamana@wars.rw", phone: "+250788002002", role: "technician", zone_id: "Bugesera", province: "Eastern Province", district: "Bugesera", sector: "Kabeza", cell: "Kabeza I", village: "Rugarama", expertise: "Pipe Infrastructure" },
 ];
 
 const MOCK_CASES = [
@@ -121,6 +121,7 @@ export function TechnicianDetailsPage() {
             <InfoRow label="Email Address" value={tech.email} />
             <InfoRow label="Phone Number" value={tech.phone} />
             <InfoRow label="Username" value={`@${tech.username}`} />
+            <InfoRow label="Specialization" value={tech.expertise} />
           </div>
         </div>
 
@@ -129,6 +130,7 @@ export function TechnicianDetailsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <InfoRow label="Role" value={tech.role} />
             <InfoRow label="Assigned Zone / District" value={tech.zone_id} />
+            <InfoRow label="Core Expertise" value={tech.expertise} />
           </div>
         </div>
 

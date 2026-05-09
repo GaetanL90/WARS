@@ -24,11 +24,15 @@ const UserManagementPage = lazy(() => import("./pages/UserManagementPage").then(
 const InfrastructurePage = lazy(() => import("./pages/InfrastructurePage").then(m => ({ default: m.InfrastructurePage })));
 const ZoneManagementPage = lazy(() => import("./pages/ZoneManagementPage").then(m => ({ default: m.ZoneManagementPage })));
 const ZoneDetailsPage = lazy(() => import("./pages/ZoneDetailsPage").then(m => ({ default: m.ZoneDetailsPage })));
+const ZoneCreationPage = lazy(() => import("./pages/ZoneCreationPage").then(m => ({ default: m.ZoneCreationPage })));
+const ZoneEditPage = lazy(() => import("./pages/ZoneEditPage").then(m => ({ default: m.ZoneEditPage })));
 const PipeManagementPage = lazy(() => import("./pages/PipeManagementPage").then(m => ({ default: m.PipeManagementPage })));
 const PipeDetailsPage = lazy(() => import("./pages/PipeDetailsPage").then(m => ({ default: m.PipeDetailsPage })));
 const WaterPointDetailsPage = lazy(() => import("./pages/WaterPointDetailsPage").then(m => ({ default: m.WaterPointDetailsPage })));
 const TechnicianDetailsPage = lazy(() => import("./pages/TechnicianDetailsPage").then(m => ({ default: m.TechnicianDetailsPage })));
 const CitizenDashboardPage = lazy(() => import("./pages/CitizenDashboardPage").then(m => ({ default: m.CitizenDashboardPage })));
+const WaterPointConfigPage = lazy(() => import("./pages/WaterPointConfigPage").then(m => ({ default: m.WaterPointConfigPage })));
+const RequestMaintenancePage = lazy(() => import("./pages/RequestMaintenancePage").then(m => ({ default: m.RequestMaintenancePage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function DashboardHome() {
@@ -37,6 +41,7 @@ function DashboardHome() {
 
   switch (auth.user.role) {
     case 'admin':
+      return <Navigate to="/dashboard/infrastructure" replace />;
     case 'manager':
       return <Navigate to="/dashboard/manager" replace />;
     case 'technician':
@@ -76,7 +81,7 @@ export function AppRouter() {
             <Route path="settings" element={<SettingsPage />} />
             
             {/* Role-Specific Dashboards */}
-            <Route path="manager" element={<ProtectedRoute allowedRoles={['manager', 'admin']} />}>
+            <Route path="manager" element={<ProtectedRoute allowedRoles={['manager']} />}>
                <Route index element={<ManagerDashboardPage />} />
             </Route>
             <Route path="technician" element={<ProtectedRoute allowedRoles={['technician']} />}>
@@ -87,15 +92,28 @@ export function AppRouter() {
             </Route>
 
             {/* Infrastructure & Governance */}
-            <Route element={<ProtectedRoute allowedRoles={["manager", "admin"]} />}>
+            <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
               <Route path="users" element={<UserManagementPage />} />
               <Route path="users/technician/:id" element={<TechnicianDetailsPage />} />
+            </Route>
+            
+            <Route element={<ProtectedRoute allowedRoles={["manager", "admin"]} />}>
               <Route path="infrastructure" element={<InfrastructurePage />} />
               <Route path="infrastructure/zones" element={<ZoneManagementPage />} />
+              <Route path="infrastructure/zones/new" element={<ZoneCreationPage />} />
               <Route path="infrastructure/zones/:id" element={<ZoneDetailsPage />} />
+              <Route path="infrastructure/zones/:id/edit" element={<ZoneEditPage />} />
               <Route path="infrastructure/pipes" element={<PipeManagementPage />} />
               <Route path="infrastructure/pipes/:id" element={<PipeDetailsPage />} />
               <Route path="infrastructure/water-point/:id" element={<WaterPointDetailsPage />} />
+              <Route path="infrastructure/water-point/:id/maintenance" element={<RequestMaintenancePage />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              <Route path="infrastructure/water-point/:id/config" element={<WaterPointConfigPage />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
               <Route path="incidents" element={<IncidentManagementPage />} />
               <Route path="incidents/sensor/:id" element={<SensorDetailsPage />} />
             </Route>

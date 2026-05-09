@@ -47,6 +47,7 @@ export function UserManagementPage() {
     sector: "",
     cell: "",
     village: "",
+    expertise: "",
   });
 
   const loadTechnicians = async () => {
@@ -104,7 +105,8 @@ export function UserManagementPage() {
           email: newTech.email,
           phone: newTech.phoneNumber,
           username: newTech.username,
-          zone_id: newTech.district
+          zone_id: newTech.district,
+          expertise: newTech.expertise
         });
         setMessage({ text: "Technician updated successfully!", type: "success" });
         setEditingTech(null);
@@ -113,14 +115,16 @@ export function UserManagementPage() {
           ...newTech,
           role: "technician",
           username: newTech.username || newTech.email.split('@')[0],
-          zone_id: newTech.district
+          zone_id: newTech.district,
+          expertise: newTech.expertise
         });
         setMessage({ text: "New Technician account created successfully!", type: "success" });
       }
       
       setNewTech({
         firstName: "", middleName: "", lastName: "", email: "", password: "", username: "",
-        phoneNumber: "", province: "", district: "Bugesera", sector: "", cell: "", village: ""
+        phoneNumber: "", province: "", district: "Bugesera", sector: "", cell: "", village: "",
+        expertise: ""
       });
       setIsFormOpen(false);
       loadTechnicians();
@@ -194,6 +198,7 @@ export function UserManagementPage() {
                 <thead>
                   <tr>
                     <th>Full Name</th>
+                    <th>Specialty / Expertise</th>
                     <th>Credentials</th>
                     <th>Zone</th>
                     <th>Actions</th>
@@ -203,6 +208,7 @@ export function UserManagementPage() {
                   {technicians.map(tech => (
                     <tr key={tech.user_id}>
                       <td><span className="item-title">{tech.full_name}</span></td>
+                      <td><span className="badge-outline" style={{ background: '#f5f3ff', color: '#6366f1', borderColor: '#e0e7ff' }}>{tech.expertise || 'Generalist'}</span></td>
                       <td>
                         <div style={{ fontSize: '0.8rem' }}>{tech.email}</div>
                         <div className="item-subtitle">@{tech.username}</div>
@@ -261,6 +267,17 @@ export function UserManagementPage() {
               <div className="form-group mb-12">
                 <label>Email Address</label>
                 <input type="email" className="input-field" value={newTech.email} onChange={e => setNewTech({...newTech, email: e.target.value})} required />
+              </div>
+
+              <div className="form-group mb-12">
+                <label>Technical Expertise / Specialty</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="e.g. IoT Systems, Pipe Infrastructure, Water Chemistry" 
+                  value={newTech.expertise} 
+                  onChange={e => setNewTech({...newTech, expertise: e.target.value})} 
+                />
               </div>
 
               {!editingTech && (
@@ -363,6 +380,10 @@ export function UserManagementPage() {
                 <div>
                   <label className="item-subtitle" style={{ fontSize: '0.7rem' }}>Email Address</label>
                   <p className="item-title">{viewingTech.email}</p>
+                </div>
+                <div className="mt-12">
+                  <label className="item-subtitle" style={{ fontSize: '0.7rem' }}>Specialization</label>
+                  <p className="item-title" style={{ color: '#6366f1' }}>{viewingTech.expertise || 'General Maintenance'}</p>
                 </div>
               </div>
             </div>

@@ -164,7 +164,44 @@ export function IncidentManagementPage() {
                   <tr key={alert.alert_id}>
                     <td><span className="id-badge">{alert.alert_id}</span></td>
                     <td><span className="issue-type-text" style={{ color: '#ef4444' }}>{alert.alert_type}</span></td>
-                    <td><span className="badge-outline">{alert.sensor_id}</span></td>
+                    <td>
+                      {(() => {
+                        const [id, typePart] = alert.sensor_id.split(' (');
+                        const type = typePart?.replace(')', '');
+                        return (
+                          <div style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            gap: '10px', 
+                            padding: '6px 14px', 
+                            background: '#f8fafc', 
+                            borderRadius: '10px',
+                            border: '1px solid #e2e8f0',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                          }}>
+                            <span style={{ 
+                              fontFamily: 'monospace', 
+                              fontWeight: 900, 
+                              fontSize: '0.8rem', 
+                              color: '#0f172a',
+                              letterSpacing: '0.05em'
+                            }}>{id}</span>
+                            {type && (
+                              <>
+                                <span style={{ width: '1px', height: '14px', background: '#e2e8f0' }} />
+                                <span style={{ 
+                                  fontSize: '0.65rem', 
+                                  fontWeight: 800, 
+                                  color: '#64748b', 
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.03em'
+                                }}>{type}</span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td>{alert.location}</td>
                     <td>{alert.timestamp}</td>
                     <td>

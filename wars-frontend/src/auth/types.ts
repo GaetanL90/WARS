@@ -8,6 +8,7 @@ export interface AuthUser {
   full_name: string;
   phone?: string;
   zone_id?: string;
+  expertise?: string;
 }
 
 export interface AuthTokens {
@@ -38,6 +39,7 @@ export interface RegisterPayload {
   password: string;
   role: UserRole;
   zone_id?: string;
+  expertise?: string;
 }
 
 export interface StartRegistrationResponse {

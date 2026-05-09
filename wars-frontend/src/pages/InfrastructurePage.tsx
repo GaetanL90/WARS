@@ -79,28 +79,16 @@ export function InfrastructurePage() {
   const [parentId, setParentId] = useState<string | null>(null);
 
   // Form states
-  const [zoneForm, setZoneForm] = useState({ zone_name: "", district: "" });
-  const [pointForm, setPointForm] = useState({ name: "", location: "", status: "online" });
+
   const [sensorForm, setSensorForm] = useState({ type: "Flow", unit: "L/s", status: "online" });
 
   const toggleZone = (id: string) => {
     setExpandedZones(prev => prev.includes(id) ? prev.filter(zid => zid !== id) : [...prev, id]);
   };
 
-  const openZoneModal = (e: any, zone: any = null) => {
-    e.stopPropagation();
-    setEditingItem(zone);
-    setZoneForm(zone ? { zone_name: zone.zone_name, district: zone.district } : { zone_name: "", district: "" });
-    setActiveModal('zone');
-  };
 
-  const openPointModal = (e: any, zoneId: string, point: any = null) => {
-    e.stopPropagation();
-    setParentId(zoneId);
-    setEditingItem(point);
-    setPointForm(point ? { name: point.name, location: point.location, status: point.status } : { name: "", location: "", status: "online" });
-    setActiveModal('point');
-  };
+
+
 
   const openSensorModal = (e: any, pointId: string, sensor: any = null) => {
     e.stopPropagation();
@@ -110,31 +98,9 @@ export function InfrastructurePage() {
     setActiveModal('sensor');
   };
 
-  const handleSaveZone = () => {
-    if (editingItem) {
-      setZones(prev => prev.map(z => z.zone_id === editingItem.zone_id ? { ...z, ...zoneForm } : z));
-    } else {
-      const newZone = { ...zoneForm, zone_id: `zone-${Date.now()}`, pointCount: 0, health: 100, waterPoints: [] };
-      setZones(prev => [...prev, newZone]);
-    }
-    setActiveModal(null);
-  };
 
-  const handleSavePoint = () => {
-    if (editingItem) {
-      setZones(prev => prev.map(z => ({
-        ...z,
-        waterPoints: z.waterPoints.map(p => p.point_id === editingItem.point_id ? { ...p, ...pointForm } : p)
-      })));
-    } else {
-      setZones(prev => prev.map(z => z.zone_id === parentId ? {
-        ...z,
-        pointCount: z.pointCount + 1,
-        waterPoints: [...z.waterPoints, { ...pointForm, point_id: `wp-${Date.now()}`, sensors: [] }]
-      } : z));
-    }
-    setActiveModal(null);
-  };
+
+
 
   const handleSaveSensor = () => {
     if (editingItem) {
@@ -165,7 +131,7 @@ export function InfrastructurePage() {
             <h1>Infrastructure Command</h1>
             <p>Monitor and manage the hierarchical water distribution network.</p>
           </div>
-          <button className="btn btn-primary btn-with-icon" onClick={(e) => openZoneModal(e)}>
+          <button className="btn btn-primary btn-with-icon" onClick={() => navigate('/dashboard/infrastructure/zones/new')}>
             <PlusIcon /> New Zone
           </button>
         </div>
@@ -188,10 +154,8 @@ export function InfrastructurePage() {
                 </div>
               </div>
               <div className="infra-zone-actions flex-gap">
-                <button className="btn btn-icon btn-sm" onClick={(e) => openZoneModal(e, zone)} title="Edit Zone"><EditIcon /></button>
-                <button className="btn btn-sm btn-outline" onClick={(e) => openPointModal(e, zone.zone_id)}>
-                   <PlusIcon /> Add Point
-                </button>
+                <button className="btn btn-icon btn-sm" onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/infrastructure/zones/${zone.zone_id}/edit`); }} title="Edit Zone"><EditIcon /></button>
+
                 <div className={`chevron-icon ${expandedZones.includes(zone.zone_id) ? 'rotate' : ''}`}>
                   <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
                     <polyline points="6 9 12 15 18 9"></polyline>
@@ -217,7 +181,7 @@ export function InfrastructurePage() {
                           <button className="btn btn-sm btn-ghost" onClick={() => navigate(`/dashboard/infrastructure/water-point/${point.point_id}`)}>
                             Telemetry
                           </button>
-                          <button className="btn btn-icon btn-sm" onClick={(e) => openPointModal(e, zone.zone_id, point)}><EditIcon /></button>
+                          <button className="btn btn-icon btn-sm" onClick={() => navigate(`/dashboard/infrastructure/water-point/${point.point_id}/config`)} title="Edit Configuration"><EditIcon /></button>
                           <button className="btn btn-sm btn-outline btn-icon" onClick={(e) => openSensorModal(e, point.point_id)} title="Add Sensor">
                             <PlusIcon />
                           </button>
@@ -241,7 +205,7 @@ export function InfrastructurePage() {
                   {zone.waterPoints.length === 0 && (
                     <div className="empty-state-subtle">
                       <p>No distribution points registered in this zone.</p>
-                      <button className="btn btn-link" onClick={(e) => openPointModal(e, zone.zone_id)}>Add your first point</button>
+
                     </div>
                   )}
                 </div>
@@ -256,43 +220,13 @@ export function InfrastructurePage() {
         <div className="modal-overlay">
           <div className="modal-content">
             <div className="flex-between mb-24">
-              <h2>{editingItem ? 'Update' : 'Register'} {activeModal === 'zone' ? 'Zone' : activeModal === 'point' ? 'Water Point' : 'Sensor'}</h2>
+              <h2>{editingItem ? 'Update' : 'Register'} {activeModal === 'point' ? 'Water Point' : 'Sensor'}</h2>
               <button className="btn btn-icon" onClick={() => setActiveModal(null)}>×</button>
             </div>
             
-            {activeModal === 'zone' && (
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Zone Name</label>
-                  <input type="text" className="input-field" placeholder="e.g. Nyamata Sector B" value={zoneForm.zone_name} onChange={e => setZoneForm({...zoneForm, zone_name: e.target.value})} />
-                </div>
-                <div className="form-group mt-16">
-                  <label>District</label>
-                  <input type="text" className="input-field" placeholder="e.g. Bugesera" value={zoneForm.district} onChange={e => setZoneForm({...zoneForm, district: e.target.value})} />
-                </div>
-              </div>
-            )}
 
-            {activeModal === 'point' && (
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Point Identifier</label>
-                  <input type="text" className="input-field" placeholder="e.g. WP-105" value={pointForm.name} onChange={e => setPointForm({...pointForm, name: e.target.value})} />
-                </div>
-                <div className="form-group mt-16">
-                  <label>Location Detail</label>
-                  <input type="text" className="input-field" placeholder="e.g. Near Health Center" value={pointForm.location} onChange={e => setPointForm({...pointForm, location: e.target.value})} />
-                </div>
-                <div className="form-group mt-16">
-                  <label>Status</label>
-                  <select className="input-field" value={pointForm.status} onChange={e => setPointForm({...pointForm, status: e.target.value})}>
-                    <option value="online">Online / Active</option>
-                    <option value="warning">Maintenance Warning</option>
-                    <option value="outage">Critical Outage</option>
-                  </select>
-                </div>
-              </div>
-            )}
+
+
 
             {activeModal === 'sensor' && (
               <div className="form-grid">
@@ -314,7 +248,7 @@ export function InfrastructurePage() {
 
             <div className="modal-footer mt-32">
               <button className="btn btn-ghost" onClick={() => setActiveModal(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={activeModal === 'zone' ? handleSaveZone : activeModal === 'point' ? handleSavePoint : handleSaveSensor}>
+              <button className="btn btn-primary" onClick={handleSaveSensor}>
                 {editingItem ? 'Save Changes' : 'Create Entity'}
               </button>
             </div>

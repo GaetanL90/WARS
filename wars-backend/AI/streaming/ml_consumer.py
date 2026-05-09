@@ -10,7 +10,7 @@ from kafka import KafkaConsumer
 
 from streaming.kafka_producer import WARSKafkaProducer
 from streaming.topics import SENSOR_TOPIC, PREDICTION_TOPIC
-from api.feature_builder import build_features   # single source of truth
+from services.feature_builder import build_features   # single source of truth
 from ml.predict_stream import predict            # single source of truth
 
 

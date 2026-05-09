@@ -1,0 +1,12 @@
+{
+  "hardware_id": "",
+  "timestamp": "",
+  "ml": {
+    "potability": 0,
+    "risk_score": 0.0
+  },
+  "edge": {
+    "risk_score": 0.0,
+    "flags": {}
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "classifier": {
+    "file": "WARS_Classifier_RF.pkl",
+    "model": "RandomForestClassifier + IsotonicCalibration",
+    "target": "Potability",
+    "type": "binary_classification",
+    "cv_roc_auc": 0.9999,
+    "cv_roc_auc_std": 0.0001,
+    "holdout_roc_auc": 1.0,
+    "holdout_avg_prec": 1.0
+  },
+  "regressor": {
+    "file": "WARS_Regressor_ET.pkl",
+    "model": "ExtraTreesRegressor",
+    "target": "Failure_Risk_Score",
+    "type": "regression",
+    "cv_mae": 0.0107,
+    "cv_r2": 0.9742,
+    "holdout_mae": 0.0097,
+    "holdout_rmse": 0.0195,
+    "holdout_r2": 0.9771
+  },
+  "scenario_encoding": {
+    "normal": 0,
+    "heavy_rain": 1,
+    "pipe_leak": 2,
+    "chemical_contamination": 3,
+    "drought": 4
+  },
+  "features": [
+    "Infrastructure_Age",
+    "Distance_to_TreatmentPlant",
+    "Population_Density",
+    "Population_Impacted",
+    "Repair_Team_Availability",
+    "Local_Authority_Responsiveness",
+    "Priority_Level",
+    "lat",
+    "lon",
+    "Scenario_encoded",
+    "Turbidity",
+    "pH",
+    "Conductivity",
+    "Organic_Carbon",
+    "ORP",
+    "Dissolved_Oxygen",
+    "Temperature",
+    "Flow_Rate",
+    "Pressure",
+    "Sensor_Fault",
+    "timestamp_year",
+    "timestamp_month",
+    "timestamp_day",
+    "timestamp_hour",
+    "weekday"
+  ]
+}

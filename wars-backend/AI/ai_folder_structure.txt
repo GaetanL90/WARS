@@ -1,0 +1,60 @@
+AI/
+│
+├── dataset/
+│   ├── raw/
+│   ├── processed/
+│   └── dataset_factory.py
+│
+├── models/
+│   ├── WARS_Classifier_RF.pkl
+│   ├── WARS_Regressor_ET.pkl
+│   └── train_models.py
+│
+├── streaming/
+│   ├── kafka_producer.py
+│   ├── sensor_simulator.py
+│   ├── ml_consumer.py
+│   ├── alert_consumer.py
+│   └── topics.py
+│
+├── schemas/
+│   ├── sensor_reading_schema.json
+│   └── ml_prediction_schema.json
+│
+├── services/
+│   ├── feature_builder.py
+│   ├── predictor.py
+│   ├── risk_engine.py
+│   └── storage_service.py
+│
+├── database/
+│   ├── db.py
+│   ├── models.py
+│   └── migrations/
+│
+├── api/
+│   ├── app.py
+│   ├── routes/
+│   │   ├── waterpoints.py
+│   │   ├── predictions.py
+│   │   └── alerts.py
+│   └── serializers/
+│
+├── config/
+│   ├── settings.py
+│   └── logging_config.py
+│
+├── docker/
+│   ├── docker-compose.yml
+│   └── kafka/
+│
+├── tests/
+│   ├── test_sensor_simulator.py
+│   ├── test_ml_consumer.py
+│   └── test_predictor.py
+│
+├── logs/
+│
+├── requirements.txt
+├── README.md
+└── .env

@@ -73,7 +73,11 @@ export const mockUsers: MockUserRecord[] = [
   { user_id: 3, username: "jp_habimana", full_name: "Jean-Pierre Habimana", email: "jp.habimana@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Bugesera", expertise: "IoT & Sensors" },
   { user_id: 4, username: "y_mukamana", full_name: "Yvonne Mukamana", email: "y.mukamana@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Bugesera", expertise: "Pipe Infrastructure" },
   { user_id: 5, username: "m_uwase", full_name: "Marie-Louise Uwase", email: "m.uwase@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Kicukiro", expertise: "Water Quality Specialist" },
-  { user_id: 6, username: "citizen", full_name: "Citizen User", email: "citizen@wars.local", password: "123456", enabled: true, role: "citizen", zone_id: "zone-a" }
+  { user_id: 6, username: "j_nyirahabimana", full_name: "Jean-Paul Nyirahabimana", email: "j.nyirahabimana@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Gasabo", expertise: "Water Treatment Specialist" },
+  { user_id: 7, username: "j_musoni", full_name: "Jean-Claude Musoni", email: "j.musoni@wars.rw", password: "123456", enabled: true, role: "technician", zone_id: "Kicukiro", expertise: "Water Quality Specialist" },
+  { user_id: 8, username: "citizen", full_name: "Citizen User", email: "citizen@wars.local", password: "123456", enabled: true, role: "citizen", zone_id: "zone-a" },
+  { user_id: 9, username: "technician", full_name: "Technician User", email: "technician@wars.local", password: "123456", enabled: true, role: "technician", zone_id: "zone-a", expertise: "Water Infrustructure Specialist" }
+
 ];
 const pendingRegistrations: PendingRegistration[] = [];
 const pendingPasswordResets: PendingPasswordReset[] = [];

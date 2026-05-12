@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState, useCallback } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { resendRegistrationOtp, startRegistration, verifyRegistrationOtp } from "../api/authApi";
 import { useAuth } from "../auth/AuthContext";
+import { getDashboardPathForRole } from "../auth/dashboardPaths";
 import type { RegisterPayload } from "../auth/types";
 import { CountrySelector } from "../components/CountrySelector";
 import { useCountries } from "../hooks/useCountries";
@@ -58,7 +59,7 @@ function EyeIcon({ closed }: { closed: boolean }) {
 }
 
 export function RegisterPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, auth } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<"identity" | "contact" | "security" | "otp">("identity");
   const [error, setError] = useState<string | null>(null);
@@ -259,7 +260,8 @@ export function RegisterPage() {
   };
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const role = auth?.user?.role;
+    return <Navigate to={role ? getDashboardPathForRole(role) : "/"} replace />;
   }
 
   useEffect(() => {

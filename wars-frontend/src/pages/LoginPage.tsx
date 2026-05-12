@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { getDashboardPathForRole, getPostLoginDestination } from "../auth/dashboardPaths";
 
 function EyeIcon({ closed }: { closed: boolean }) {
   if (closed) {
@@ -51,14 +52,8 @@ export function LoginPage() {
 
   const role = auth?.user?.role;
 
-  const getDefaultDest = (r: string | undefined) => {
-    if (r === "citizen") return "/reports/new";
-    if (r === "technician") return "/reports/assigned";
-    return "/dashboard";
-  };
-
-  if (isAuthenticated) {
-    return <Navigate to={getDefaultDest(role)} replace />;
+  if (isAuthenticated && role) {
+    return <Navigate to={getDashboardPathForRole(role)} replace />;
   }
 
   const onSubmit = async (event: FormEvent) => {
@@ -68,8 +63,7 @@ export function LoginPage() {
 
     try {
       const nextAuth = await login({ email, password });
-      const userRole = nextAuth.user.role;
-      const dest = authState?.from?.pathname ?? getDefaultDest(userRole);
+      const dest = getPostLoginDestination(authState?.from?.pathname, nextAuth.user.role);
       navigate(dest, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

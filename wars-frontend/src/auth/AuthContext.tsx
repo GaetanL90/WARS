@@ -1,5 +1,7 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { login as loginRequest } from "../api/authApi";
+import { normalizeAuthState } from "./normalizeAuth";
 import type { AuthState, LoginPayload, UserRole } from "./types";
 
 interface AuthContextValue {
@@ -15,49 +17,58 @@ const STORAGE_KEY = "wars-auth";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [auth, setAuth] = useState<AuthState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      try {
-        setAuth(JSON.parse(raw) as AuthState);
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
-      }
+function readStoredAuth(): AuthState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AuthState;
+    if (!parsed?.accessToken || !parsed?.user) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
     }
-    setIsLoading(false);
+    return normalizeAuthState(parsed);
+  } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [auth, setAuth] = useState<AuthState | null>(readStoredAuth);
+
+  const login = useCallback(async (payload: LoginPayload): Promise<AuthState> => {
+    const nextAuth = normalizeAuthState(await loginRequest(payload));
+    flushSync(() => {
+      setAuth(nextAuth);
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextAuth));
+    });
+    return nextAuth;
   }, []);
 
-  const login = async (payload: LoginPayload): Promise<AuthState> => {
-    const nextAuth = await loginRequest(payload);
-    setAuth(nextAuth);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextAuth));
-    return nextAuth;
-  };
-
-  const logout = () => {
+  const logout = useCallback(() => {
     setAuth(null);
-    localStorage.removeItem(STORAGE_KEY);
-  };
+    window.localStorage.removeItem(STORAGE_KEY);
+  }, []);
 
-  const hasAnyRole = (roles: UserRole[]) => {
-    if (!auth) return false;
-    return roles.includes(auth.user.role);
-  };
+  const hasAnyRole = useCallback(
+    (roles: UserRole[]) => {
+      const role = auth?.user?.role;
+      return role !== undefined && roles.includes(role);
+    },
+    [auth]
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
       auth,
       isAuthenticated: Boolean(auth),
-      isLoading,
+      isLoading: false,
       login,
       logout,
       hasAnyRole
     }),
-    [auth, isLoading]
+    [auth, login, logout, hasAnyRole]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

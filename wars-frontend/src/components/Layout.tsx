@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import warsLogo from "../assets/WARS_logo.png";
 
@@ -127,6 +127,7 @@ function ServerIcon() {
 
 export function Layout() {
   const { auth, logout, hasAnyRole } = useAuth();
+  const navigate = useNavigate();
   const [isSidenavOpen, setIsSidenavOpen] = useState(true);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -134,6 +135,12 @@ export function Layout() {
   const accountMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+
+  const handleLogout = () => {
+    setIsAccountMenuOpen(false);
+    logout();
+    navigate("/", { replace: true });
+  };
 
   // Mock notifications
   const [notifications, setNotifications] = useState([
@@ -211,12 +218,9 @@ export function Layout() {
             <>
               <Link to="/dashboard/technician" className={`nav-item ${location.pathname === "/dashboard/technician" ? "active" : ""}`}>
                 <LayoutDashboardIcon />
-                <span>Tech Dashboard</span>
+                <span>Assigned Cases</span>
               </Link>
-              <Link to="/dashboard/reports/assigned" className={`nav-item ${location.pathname === "/dashboard/reports/assigned" ? "active" : ""}`}>
-                <WrenchIcon />
-                <span>Assigned Case</span>
-              </Link>
+              
               <Link to="/dashboard/reports/new" className={`nav-item ${location.pathname === "/dashboard/reports/new" ? "active" : ""}`}>
                 <FilePlusIcon />
                 <span>Submit Report</span>
@@ -359,7 +363,7 @@ export function Layout() {
                   <Link to="/" className="dropdown-item text-link" onClick={() => setIsAccountMenuOpen(false)}>
                     Home
                   </Link>
-                  <button className="dropdown-item text-danger" onClick={logout}>
+                  <button className="dropdown-item text-danger" onClick={handleLogout}>
                     Logout
                   </button>
                 </div>

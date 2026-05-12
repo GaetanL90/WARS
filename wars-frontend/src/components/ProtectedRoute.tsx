@@ -6,6 +6,7 @@ interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
 }
 
+/** When extending routes, update `isDashboardPathAllowedForRole` in `auth/dashboardPaths.ts` (post-login). */
 export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading, hasAnyRole } = useAuth();
   const location = useLocation();

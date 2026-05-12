@@ -3,6 +3,7 @@ import { Route, Routes, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { useAuth } from "./auth/AuthContext";
+import { getDashboardPathForRole } from "./auth/dashboardPaths";
 
 // Lazy-loaded pages
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage").then(m => ({ default: m.ForgotPasswordPage })));
@@ -38,18 +39,7 @@ const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ defa
 function DashboardHome() {
   const { auth } = useAuth();
   if (!auth || !auth.user) return <Navigate to="/login" replace />;
-
-  switch (auth.user.role) {
-    case 'admin':
-      return <Navigate to="/dashboard/infrastructure" replace />;
-    case 'manager':
-      return <Navigate to="/dashboard/manager" replace />;
-    case 'technician':
-      return <Navigate to="/dashboard/technician" replace />;
-    case 'citizen':
-    default:
-      return <Navigate to="/dashboard/citizen" replace />;
-  }
+  return <Navigate to={getDashboardPathForRole(auth.user.role)} replace />;
 }
 
 // Simple loading fallback

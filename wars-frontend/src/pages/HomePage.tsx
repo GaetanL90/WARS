@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { getDashboardPathForRole } from "../auth/dashboardPaths";
 import warsLogo from "../assets/WARS_logo.png";
 import bustedPipeImage from "../assets/bursted_pipe.jpg";
 import contaminatedTapImage from "../assets/solving-brown-water-from-tap.jpg";
 
 export function HomePage() {
-  const { isAuthenticated } = useAuth();
-  
+  const { isAuthenticated, auth } = useAuth();
+
   const getDashboardLink = () => {
     if (!isAuthenticated) return "/login";
-    return "/dashboard";
+    const role = auth?.user?.role;
+    return role ? getDashboardPathForRole(role) : "/login";
   };
   
   const dashboardLink = getDashboardLink();

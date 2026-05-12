@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { getDashboardPathForRole } from "../auth/dashboardPaths";
 
 export function UnauthorizedPage() {
   const { auth, isAuthenticated } = useAuth();
@@ -10,10 +11,8 @@ export function UnauthorizedPage() {
   const getLandingPage = () => {
     if (!isAuthenticated) return "/login";
     const role = auth?.user?.role;
-    if (role === "technician") return "/reports/assigned";
-    if (role === "citizen") return "/reports/new";
-    if (role === "manager" || role === "admin") return "/dashboard";
-    return "/";
+    if (!role) return "/";
+    return getDashboardPathForRole(role);
   };
 
   useEffect(() => {

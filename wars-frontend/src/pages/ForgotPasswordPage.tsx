@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { completeForgotPassword, resendForgotPasswordOtp, startForgotPassword, verifyForgotPasswordOtp } from "../api/authApi";
 import { useAuth } from "../auth/AuthContext";
+import { getDashboardPathForRole } from "../auth/dashboardPaths";
 
 type ForgotStep = "request" | "verifyOtp" | "resetPassword";
 const RESEND_COOLDOWN_SECONDS = [30, 60, 300];
@@ -13,7 +14,7 @@ function formatCountdown(totalSeconds: number): string {
 }
 
 export function ForgotPasswordPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, auth } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<ForgotStep>("request");
   const [email, setEmail] = useState("");
@@ -29,7 +30,8 @@ export function ForgotPasswordPage() {
   const [resendRemainingSeconds, setResendRemainingSeconds] = useState(0);
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const role = auth?.user?.role;
+    return <Navigate to={role ? getDashboardPathForRole(role) : "/"} replace />;
   }
 
   useEffect(() => {

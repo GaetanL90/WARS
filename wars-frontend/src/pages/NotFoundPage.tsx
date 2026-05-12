@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { getDashboardPathForRole } from "../auth/dashboardPaths";
 
 export function NotFoundPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, auth } = useAuth();
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(5);
 
-  const landingPage = isAuthenticated ? "/dashboard" : "/";
+  const role = auth?.user?.role;
+  const landingPage = isAuthenticated && role ? getDashboardPathForRole(role) : "/";
 
   useEffect(() => {
     if (countdown <= 0) {

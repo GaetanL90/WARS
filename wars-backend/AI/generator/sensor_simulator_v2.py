@@ -1,6 +1,8 @@
 import time
 import json
 from datetime import datetime
+from ml.predict_stream import predict
+
 try:
     from .realistic_patterns import WaterQualityPatterns
     from .scenarios import heavy_rain_event
@@ -38,6 +40,9 @@ class WARS_SensorNode:
             },
             "sensors": sensor_data
         }
+        
+        result = predict(sensor_data)
+        print("\n📊 PREDICTION:", result)
         return payload
 
 if __name__ == "__main__":

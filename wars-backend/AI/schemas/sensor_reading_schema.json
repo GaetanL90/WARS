@@ -1,0 +1,9 @@
+{
+  "type": "object",
+  "required": [
+    "metadata",
+    "sensors",
+    "infrastructure",
+    "time_features"
+  ]
+}

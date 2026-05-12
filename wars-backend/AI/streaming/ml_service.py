@@ -9,7 +9,7 @@ import json
 from kafka import KafkaConsumer
 
 from streaming.kafka_producer import WARSKafkaProducer
-from streaming.topics import SENSOR_TOPIC, PREDICTION_TOPIC
+from streaming.topics import SENSOR_TOPIC, ENRICHED_TOPIC, ALERT_TOPIC
 from services.feature_builder import build_features   # single source of truth
 from ml.predict_stream import predict            # single source of truth
 
@@ -40,11 +40,24 @@ for msg in consumer:
         payload["ml_output"] = ml_output
 
         producer.send(
-            PREDICTION_TOPIC,
+            ENRICHED_TOPIC,
             payload,
             key=hardware_id,
         )
 
+        risk = ml_output.get("failure_risk_score", 0)
+
+        if risk > 0.7 or ml_output["risk_level"] == "HIGH":
+            producer.send(
+                ALERT_TOPIC,
+                {
+                    "hardware_id": hardware_id,
+                    "risk": risk,
+                    "ml_output": ml_output,
+                },
+                key=hardware_id,
+            )
+    
         print(
             f"✅ [{hardware_id}] "
             f"Potable={ml_output['potability']} "

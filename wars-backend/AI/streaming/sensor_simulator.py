@@ -11,6 +11,7 @@ import numpy as np
 from datetime import datetime
 from pathlib import Path
 from streaming.kafka_producer import WARSKafkaProducer
+from streaming.topics import SENSOR_TOPIC, ENRICHED_TOPIC
 
 # ─────────────────────────────────────────────
 # SCENARIO DEFINITIONS
@@ -441,8 +442,8 @@ if __name__ == "__main__":
     )
     producer = WARSKafkaProducer(bootstrap_servers="localhost:9092")
 
-    SENSOR_TOPIC = "wars.sensor.readings"
-    PRED_TOPIC   = "wars.ml.predictions"  # future ML output stream
+    # SENSOR_TOPIC = "wars.sensor.readings"
+    # PRED_TOPIC   = "wars.ml.predictions"  # future ML output stream
 
     print(f"--- WARS IoT Node {node.hardware_id} Online (fw {WARS_SensorNode.FIRMWARE_VERSION}) ---")
     print("Polling every 5 seconds. Ctrl+C to stop.\n")
@@ -462,15 +463,15 @@ if __name__ == "__main__":
             node.print_summary(reading)
             
             # Hit the API
-            response =  requests.post(
-                "http://127.0.0.1:8000/sensors/sensor",
-                json=reading,
-                timeout=30
-            )
-            print(f"  API → {response.status_code}: {response.json()}")
+            # response =  requests.post(
+            #     "http://127.0.0.1:8000/sensors/sensor",
+            #     json=reading,
+            #     timeout=30
+            # )
+            # print(f"  API → {response.status_code}: {response.json()}")
 
             # 3. Optional ML prediction stream (future)
-            #producer.send(PRED_TOPIC, reading)
+            #producer.send(PREDICTION_TOPIC, reading)
 
             # 4. JSON log (optional debug only)
             # print(json.dumps(reading))

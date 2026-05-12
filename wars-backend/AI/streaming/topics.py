@@ -1,3 +1,4 @@
 SENSOR_TOPIC = "wars.sensor.readings"
-PREDICTION_TOPIC = "wars.ml.predictions"
+ENRICHED_TOPIC = "wars.sensor.enriched"
 ALERT_TOPIC = "wars.alerts"
+SAVETODB_TOPIC = "wars.sensor.enriched"

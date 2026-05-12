@@ -263,16 +263,20 @@ export function Layout() {
                 <AlertCircleIcon />
                 <span>Incident Management</span>
               </Link>
-              <Link to="/dashboard/analytics" className={`nav-item ${location.pathname === "/dashboard/analytics" ? "active" : ""}`}>
+              <Link to="/dashboard/manager/analytics" className={`nav-item ${location.pathname === "/dashboard/manager/analytics" ? "active" : ""}`}>
                 <BarChartIcon />
                 <span>Analytics</span>
               </Link>
             </>
           )}
 
-          {/* Admin links */}
+           {/* Admin links */}
           {hasAnyRole(["admin"]) && (
             <>
+              <Link to="/dashboard/admin" className={`nav-item ${location.pathname === "/dashboard/admin" ? "active" : ""}`}>
+                <LayoutDashboardIcon />
+                <span>Admin Dashboard</span>
+              </Link>
               <Link to="/dashboard/infrastructure" className={`nav-item ${location.pathname === "/dashboard/infrastructure" ? "active" : ""}`}>
                 <ServerIcon />
                 <span>Infrastructure Hub</span>

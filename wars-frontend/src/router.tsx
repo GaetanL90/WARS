@@ -34,6 +34,8 @@ const TechnicianDetailsPage = lazy(() => import("./pages/TechnicianDetailsPage")
 const CitizenDashboardPage = lazy(() => import("./pages/CitizenDashboardPage").then(m => ({ default: m.CitizenDashboardPage })));
 const WaterPointConfigPage = lazy(() => import("./pages/WaterPointConfigPage").then(m => ({ default: m.WaterPointConfigPage })));
 const RequestMaintenancePage = lazy(() => import("./pages/RequestMaintenancePage").then(m => ({ default: m.RequestMaintenancePage })));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage").then(m => ({ default: m.AnalyticsPage })));
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage").then(m => ({ default: m.AdminDashboardPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
 function DashboardHome() {
@@ -73,6 +75,10 @@ export function AppRouter() {
             {/* Role-Specific Dashboards */}
             <Route path="manager" element={<ProtectedRoute allowedRoles={['manager']} />}>
                <Route index element={<ManagerDashboardPage />} />
+               <Route path="analytics" element={<AnalyticsPage />} />
+            </Route>
+            <Route path="admin" element={<ProtectedRoute allowedRoles={['admin']} />}>
+               <Route index element={<AdminDashboardPage />} />
             </Route>
             <Route path="technician" element={<ProtectedRoute allowedRoles={['technician']} />}>
                <Route index element={<AssignedReportsPage />} />

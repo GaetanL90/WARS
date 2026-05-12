@@ -4,13 +4,13 @@ import type { UserRole } from "./types";
  * Default dashboard URL after login (and “Dashboard” links from marketing home).
  *
  * Role → path (must match guarded routes in `router.tsx`)
- * - admin       → `/dashboard/infrastructure`
+ * - admin       → `/dashboard/admin`
  * - manager     → `/dashboard/manager`
  * - technician  → `/dashboard/technician`
  * - citizen     → `/dashboard/citizen`
  */
 export const ROLE_DEFAULT_DASHBOARD_PATH: Record<UserRole, string> = {
-  admin: "/dashboard/infrastructure",
+  admin: "/dashboard/admin",
   manager: "/dashboard/manager",
   technician: "/dashboard/technician",
   citizen: "/dashboard/citizen"
@@ -46,7 +46,7 @@ export function isDashboardPathAllowedForRole(pathname: string, role: UserRole):
   if (p.startsWith("/dashboard/incidents")) return role === "manager";
 
   if (/\/water-point\/[^/]+\/config(?:\/|$)/.test(p)) return role === "admin";
-  if (p.startsWith("/dashboard/infrastructure")) return role === "manager" || role === "admin";
+  if (p.startsWith("/dashboard/admin")) return role === "manager" || role === "admin";
 
   if (
     p.startsWith("/dashboard/reports/assigned") ||

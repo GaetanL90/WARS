@@ -465,4 +465,48 @@ export async function updateUser(userId: number, updates: Partial<AuthUser>): Pr
   }
 }
 
+// Admin Specific Functions
+export async function getAllUsers(): Promise<AuthUser[]> {
+  if (USE_MOCK_AUTH) {
+    return mockUsers.map(u => ({
+      user_id: u.user_id,
+      username: u.username,
+      full_name: u.full_name,
+      email: u.email,
+      role: u.role,
+      phone: u.phoneNumber,
+      zone_id: u.zone_id,
+      expertise: u.expertise
+    }));
+  }
+  return [];
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  if (USE_MOCK_AUTH) {
+    const index = mockUsers.findIndex(u => u.user_id === userId);
+    if (index >= 0) {
+      mockUsers.splice(index, 1);
+    }
+    return;
+  }
+}
+
+export interface SystemLog {
+  id: string;
+  action: string;
+  user: string;
+  timestamp: string;
+  details: string;
+}
+
+export async function getSystemLogs(): Promise<SystemLog[]> {
+  return [
+    { id: "LOG-001", action: "USER_PROMOTION", user: "Admin", timestamp: new Date().toISOString(), details: "Promoted user 8 to technician" },
+    { id: "LOG-002", action: "ZONE_CREATED", user: "Manager", timestamp: new Date(Date.now() - 3600000).toISOString(), details: "Created zone 'Bugesera East'" },
+    { id: "LOG-003", action: "SECURITY_ALERT", user: "System", timestamp: new Date(Date.now() - 7200000).toISOString(), details: "Multiple failed login attempts from 192.168.1.1" },
+    { id: "LOG-004", action: "CONFIG_CHANGE", user: "Admin", timestamp: new Date(Date.now() - 86400000).toISOString(), details: "Updated turbidity threshold to 5.0 NTU" },
+  ];
+}
+
 
